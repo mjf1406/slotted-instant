@@ -40,6 +40,8 @@ const _schema = i.schema({
             days: i.json(), // string[]
             startTime: i.number().indexed(),
             endTime: i.number().indexed(),
+            color: i.string().indexed(),
+            iconName: i.string().indexed(),
         }),
         classes: i.entity({
             name: i.string().indexed(),

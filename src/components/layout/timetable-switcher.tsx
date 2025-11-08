@@ -4,6 +4,7 @@
 
 import * as React from "react";
 import { ChevronsUpDown, Plus, CalendarIcon, Edit, Trash2 } from "lucide-react";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
 import { CreateTimetableModal } from "@/components/CreateTimetableModal";
@@ -123,6 +124,8 @@ export function TimetableSwitcher() {
         days: string[];
         startTime: number;
         endTime: number;
+        color?: string;
+        iconName?: string;
     } | null>(null);
     const [timetableToDelete, setTimetableToDelete] = React.useState<{
         id: string;
@@ -137,6 +140,8 @@ export function TimetableSwitcher() {
             days: (timetable.days as string[]) || [],
             startTime: timetable.startTime,
             endTime: timetable.endTime,
+            color: (timetable as any).color,
+            iconName: (timetable as any).iconName,
         });
         setEditModalOpen(true);
     };
@@ -149,6 +154,8 @@ export function TimetableSwitcher() {
         setDeleteDialogOpen(true);
     };
 
+    const displayTimetable = selectedTimetable || timetables[0];
+
     if (isLoading) {
         return (
             <SidebarMenu>
@@ -157,8 +164,20 @@ export function TimetableSwitcher() {
                         size="lg"
                         disabled
                     >
-                        <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                            <CalendarIcon className="size-4" />
+                        <div
+                            className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
+                            style={{
+                                backgroundColor: displayTimetable?.color || "var(--sidebar-primary)",
+                            }}
+                        >
+                            {displayTimetable?.iconName ? (
+                                <Icon
+                                    name={displayTimetable.iconName as IconName}
+                                    className="size-4"
+                                />
+                            ) : (
+                                <CalendarIcon className="size-4" />
+                            )}
                         </div>
                         <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-medium">
@@ -170,8 +189,6 @@ export function TimetableSwitcher() {
             </SidebarMenu>
         );
     }
-
-    const displayTimetable = selectedTimetable || timetables[0];
 
     return (
         <>
@@ -186,8 +203,20 @@ export function TimetableSwitcher() {
                                 size="lg"
                                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
-                                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                                    <CalendarIcon className="size-4" />
+                                <div
+                                    className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
+                                    style={{
+                                        backgroundColor: (displayTimetable as any)?.color || "var(--sidebar-primary)",
+                                    }}
+                                >
+                                    {(displayTimetable as any)?.iconName ? (
+                                        <Icon
+                                            name={(displayTimetable as any).iconName as IconName}
+                                            className="size-4"
+                                        />
+                                    ) : (
+                                        <CalendarIcon className="size-4" />
+                                    )}
                                 </div>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">
@@ -232,8 +261,20 @@ export function TimetableSwitcher() {
                                                 setDropdownOpen(false);
                                             }}
                                         >
-                                            <div className="flex size-6 items-center justify-center rounded-md border">
-                                                <CalendarIcon className="size-3.5 shrink-0" />
+                                            <div
+                                                className="flex size-6 items-center justify-center rounded-md border"
+                                                style={{
+                                                    backgroundColor: (timetable as any).color || "transparent",
+                                                }}
+                                            >
+                                                {(timetable as any).iconName ? (
+                                                    <Icon
+                                                        name={(timetable as any).iconName as IconName}
+                                                        className="size-3.5 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <CalendarIcon className="size-3.5 shrink-0" />
+                                                )}
                                             </div>
                                             <span
                                                 className={

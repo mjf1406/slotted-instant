@@ -5,7 +5,7 @@
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { ModeToggle } from "@/components/themes/theme-toggle";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TimetableProvider, useTimetable } from "@/lib/timetable-context";
 import { db } from "@/lib/db";
 import { id } from "@instantdb/react";

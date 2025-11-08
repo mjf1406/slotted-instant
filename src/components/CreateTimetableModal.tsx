@@ -5,7 +5,6 @@
 import React, { useState, useEffect } from "react";
 import { id } from "@instantdb/react";
 import { db } from "@/lib/db";
-import { useTimetable } from "@/lib/timetable-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +18,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, Plus } from "lucide-react";
+import { IconPicker, Icon, type IconName } from "@/components/ui/icon-picker";
 
 const WEEKDAYS = [
     "Monday",
@@ -35,6 +35,7 @@ interface FormErrors {
     days?: string;
     startTime?: string;
     endTime?: string;
+    color?: string;
 }
 
 function timeToMinutes(time: string): number {
@@ -46,7 +47,7 @@ interface CreateTimetableModalProps {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     trigger?: React.ReactNode;
-    timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number } | null;
+    timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number; color?: string; iconName?: string } | null;
 }
 
 export function CreateTimetableModal({
@@ -91,11 +92,10 @@ function CreateTimetableModalContent({
     setIsOpen: (open: boolean) => void;
     trigger?: React.ReactNode;
     isControlled: boolean;
-    timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number } | null;
+    timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number; color?: string; iconName?: string } | null;
 }) {
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
-    const { setSelectedTimetable, timetables } = useTimetable();
     const user = db.useUser();
     const isEditMode = !!timetable;
 
@@ -104,6 +104,8 @@ function CreateTimetableModalContent({
         days: [] as string[],
         startTime: "09:00",
         endTime: "17:00",
+        color: "#000000",
+        iconName: "" as IconName | "",
     });
 
     const validateForm = (): boolean => {
@@ -115,6 +117,10 @@ function CreateTimetableModalContent({
 
         if (formData.days.length === 0) {
             newErrors.days = "Select at least one day";
+        }
+
+        if (!formData.color.trim()) {
+            newErrors.color = "Color is required";
         }
 
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -152,6 +158,8 @@ function CreateTimetableModalContent({
                 days: timetable.days || [],
                 startTime: minutesToTime(timetable.startTime),
                 endTime: minutesToTime(timetable.endTime),
+                color: timetable.color || "#000000",
+                iconName: (timetable.iconName as IconName) || "",
             });
         } else if (isOpen && !timetable) {
             setFormData({
@@ -159,6 +167,8 @@ function CreateTimetableModalContent({
                 days: [],
                 startTime: "09:00",
                 endTime: "17:00",
+                color: "#000000",
+                iconName: "",
             });
         }
     }, [isOpen, timetable]);
@@ -184,6 +194,8 @@ function CreateTimetableModalContent({
                         days: formData.days,
                         startTime: startMinutes,
                         endTime: endMinutes,
+                        color: formData.color,
+                        iconName: formData.iconName || "",
                     })
                 );
             } else {
@@ -196,6 +208,8 @@ function CreateTimetableModalContent({
                             days: formData.days,
                             startTime: startMinutes,
                             endTime: endMinutes,
+                            color: formData.color,
+                            iconName: formData.iconName || "",
                         })
                         .link({ owner: user.id })
                 );
@@ -207,6 +221,8 @@ function CreateTimetableModalContent({
                 days: [],
                 startTime: "09:00",
                 endTime: "17:00",
+                color: "#000000",
+                iconName: "",
             });
             setErrors({});
             setIsOpen(false);
@@ -244,6 +260,8 @@ function CreateTimetableModalContent({
                 days: [],
                 startTime: "09:00",
                 endTime: "17:00",
+                color: "#000000",
+                iconName: "",
             });
             setErrors({});
         }
@@ -399,6 +417,90 @@ function CreateTimetableModalContent({
                                 {errors.endTime}
                             </p>
                         )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="color"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Color
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="color"
+                                type="color"
+                                value={formData.color}
+                                onChange={(e) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        color: e.target.value,
+                                    }));
+                                    if (errors.color) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            color: undefined,
+                                        }));
+                                    }
+                                }}
+                                className="h-10 w-20"
+                            />
+                            <Input
+                                type="text"
+                                value={formData.color}
+                                onChange={(e) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        color: e.target.value,
+                                    }));
+                                    if (errors.color) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            color: undefined,
+                                        }));
+                                    }
+                                }}
+                                placeholder="#000000"
+                            />
+                        </div>
+                        {errors.color && (
+                            <p className="text-sm text-destructive">
+                                {errors.color}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="iconName"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Icon
+                        </label>
+                        <IconPicker
+                            value={formData.iconName || undefined}
+                            onValueChange={(value) => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    iconName: value,
+                                }));
+                            }}
+                            triggerPlaceholder="Select an icon"
+                        >
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                {formData.iconName ? (
+                                    <>
+                                        <Icon name={formData.iconName} />
+                                        {formData.iconName}
+                                    </>
+                                ) : (
+                                    "Select an icon"
+                                )}
+                            </Button>
+                        </IconPicker>
                     </div>
 
                     <DialogFooter>

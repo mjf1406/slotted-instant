@@ -40,12 +40,16 @@ export function TimetableProvider({
                       $: {
                           where: { "owner.id": user.id },
                       },
+                      owner: {},
+                      classes: {},
+                      slots: {},
+                      slotClasses: {},
                   },
               }
             : {}
     );
 
-    const timetables = data?.timetables || [];
+    const timetables = (data?.timetables || []) as Timetable[];
 
     // Set first timetable as selected when timetables load
     useEffect(() => {
