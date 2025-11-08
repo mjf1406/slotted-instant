@@ -25,16 +25,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import ResponsiveAlertDialog from "@/components/ui/responsive-alert-dialog";
 import { NavUser } from "@/components/layout/nav-user";
 import { TimetableSwitcher } from "@/components/layout/timetable-switcher";
 import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
@@ -70,32 +61,18 @@ function DeleteClassDialog({
     }
 
     return (
-        <AlertDialog
+        <ResponsiveAlertDialog
             open={open}
             onOpenChange={onOpenChange}
-        >
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Class</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Are you sure you want to delete "{classItem.name}"? This
-                        action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>
-                        Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                        {isDeleting ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+            title="Delete Class"
+            description={`Are you sure you want to delete "${classItem.name}"? This action cannot be undone.`}
+            cancelText="Cancel"
+            actionText={isDeleting ? "Deleting..." : "Delete"}
+            onCancel={() => onOpenChange(false)}
+            onAction={handleDelete}
+            actionVariant="destructive"
+            disabled={isDeleting}
+        />
     );
 }
 
@@ -144,7 +121,7 @@ function ClassItem({ classItem }: { classItem: Class }) {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-muted-foreground hover:text-foreground"
+                                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 h-auto text-muted-foreground hover:text-foreground"
                                 onClick={(e) => e.stopPropagation()}
                                 aria-label="Class actions"
                             >

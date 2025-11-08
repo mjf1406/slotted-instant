@@ -1,0 +1,27 @@
+import * as React from "react"
+
+export function useMediaQuery(query: string) {
+  const [matches, setMatches] = React.useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia(query).matches
+    }
+    return false
+  })
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const mediaQuery = window.matchMedia(query)
+    setMatches(mediaQuery.matches)
+
+    const handler = (event: MediaQueryListEvent) => {
+      setMatches(event.matches)
+    }
+
+    mediaQuery.addEventListener("change", handler)
+    return () => mediaQuery.removeEventListener("change", handler)
+  }, [query])
+
+  return matches
+}
+

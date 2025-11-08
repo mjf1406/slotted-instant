@@ -25,16 +25,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import ResponsiveAlertDialog from "@/components/ui/responsive-alert-dialog";
 
 function DeleteTimetableDialog({
     timetable,
@@ -82,37 +73,23 @@ function DeleteTimetableDialog({
     }
 
     return (
-        <AlertDialog
+        <ResponsiveAlertDialog
             open={open}
             onOpenChange={onOpenChange}
-        >
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Timetable</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Are you sure you want to delete "{timetable.name}"? This
-                        action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>
-                        Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                        {isDeleting ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+            title="Delete Timetable"
+            description={`Are you sure you want to delete "${timetable.name}"? This action cannot be undone.`}
+            cancelText="Cancel"
+            actionText={isDeleting ? "Deleting..." : "Delete"}
+            onCancel={() => onOpenChange(false)}
+            onAction={handleDelete}
+            actionVariant="destructive"
+            disabled={isDeleting}
+        />
     );
 }
 
 export function TimetableSwitcher() {
-    const { isMobile } = useSidebar();
+    const { isMobile, setOpenMobile } = useSidebar();
     const { selectedTimetable, setSelectedTimetable, timetables, isLoading } =
         useTimetable();
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -259,6 +236,10 @@ export function TimetableSwitcher() {
                                             onClick={() => {
                                                 setSelectedTimetable(timetable);
                                                 setDropdownOpen(false);
+                                                // Auto-collapse sidebar on mobile when timetable is selected
+                                                if (isMobile) {
+                                                    setOpenMobile(false);
+                                                }
                                             }}
                                         >
                                             <div

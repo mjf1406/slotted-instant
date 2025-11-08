@@ -10,14 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
     DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
+import ResponsiveDialog from "@/components/ui/responsive-dialog";
 import { Loader2, Plus } from "lucide-react";
 import { IconPicker, Icon, type IconName } from "@/components/ui/icon-picker";
 import type { Class } from "@/lib/types";
@@ -261,40 +256,24 @@ function CreateClassModalContentInner({
     }, [isOpen, isEditMode]);
 
     return (
-        <Dialog
+        <ResponsiveDialog
             open={isOpen}
             onOpenChange={setIsOpen}
+            trigger={trigger}
+            triggerIcon={!trigger && !isControlled ? <Plus size={20} /> : undefined}
+            triggerText={!trigger && !isControlled ? "Create Class" : undefined}
+            title={isEditMode ? "Edit Class" : "Create New Class"}
+            description={
+                isEditMode
+                    ? "Update the class details."
+                    : "Enter the details for your new class."
+            }
+            contentClassName="sm:max-w-[425px]"
         >
-            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-            {!trigger && !isControlled && (
-                <DialogTrigger asChild>
-                    <Button
-                        variant="default"
-                        onClick={() => setIsOpen(true)}
-                    >
-                        <Plus
-                            size={20}
-                            className="mr-2"
-                        />{" "}
-                        Create Class
-                    </Button>
-                </DialogTrigger>
-            )}
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>
-                        {isEditMode ? "Edit Class" : "Create New Class"}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {isEditMode
-                            ? "Update the class details."
-                            : "Enter the details for your new class."}
-                    </DialogDescription>
-                </DialogHeader>
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-6"
-                >
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-6"
+            >
                     <div className="space-y-2">
                         <label
                             htmlFor="name"
@@ -448,7 +427,6 @@ function CreateClassModalContentInner({
                         </Button>
                     </DialogFooter>
                 </form>
-            </DialogContent>
-        </Dialog>
+        </ResponsiveDialog>
     );
 }

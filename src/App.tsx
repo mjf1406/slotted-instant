@@ -23,11 +23,13 @@ import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
+    useSidebar,
 } from "@/components/ui/sidebar";
 
 function TimetableView() {
     const { selectedTimetable } = useTimetable();
     const user = db.useUser();
+    const { isMobile, setOpenMobile } = useSidebar();
 
     const handleDrop = async (e: React.DragEvent, slotId?: string) => {
         e.preventDefault();
@@ -38,6 +40,10 @@ function TimetableView() {
         try {
             const data = JSON.parse(e.dataTransfer.getData("application/json"));
             if (data.type === "class" && data.classId) {
+                // Auto-collapse sidebar on mobile when class is dragged out
+                if (isMobile) {
+                    setOpenMobile(false);
+                }
                 // Create or update slot class
                 const slotClassId = id();
                 const currentDate = new Date();

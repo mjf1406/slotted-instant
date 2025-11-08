@@ -9,14 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
     DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
+import ResponsiveDialog from "@/components/ui/responsive-dialog";
 import { Loader2, Plus } from "lucide-react";
 import { IconPicker, Icon, type IconName } from "@/components/ui/icon-picker";
 
@@ -294,25 +289,21 @@ function CreateTimetableModalContentInner({
     }, [isOpen, isEditMode]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-            {!trigger && !isControlled && (
-                <DialogTrigger asChild>
-                    <Button variant="default" onClick={() => setIsOpen(true)}>
-                        <Plus size={20} className="mr-2" /> Create Timetable
-                    </Button>
-                </DialogTrigger>
-            )}
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Edit Timetable" : "Create New Timetable"}</DialogTitle>
-                    <DialogDescription>
-                        {isEditMode
-                            ? "Update the name, days, and times for your timetable."
-                            : "Enter a name, select days, and set start and end times for your timetable."}
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6">
+        <ResponsiveDialog
+            open={isOpen}
+            onOpenChange={setIsOpen}
+            trigger={trigger}
+            triggerIcon={!trigger && !isControlled ? <Plus size={20} /> : undefined}
+            triggerText={!trigger && !isControlled ? "Create Timetable" : undefined}
+            title={isEditMode ? "Edit Timetable" : "Create New Timetable"}
+            description={
+                isEditMode
+                    ? "Update the name, days, and times for your timetable."
+                    : "Enter a name, select days, and set start and end times for your timetable."
+            }
+            contentClassName="sm:max-w-[425px]"
+        >
+            <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
                         <label
                             htmlFor="name"
@@ -542,8 +533,7 @@ function CreateTimetableModalContentInner({
                         </Button>
                     </DialogFooter>
                 </form>
-            </DialogContent>
-        </Dialog>
+        </ResponsiveDialog>
     );
 }
 
