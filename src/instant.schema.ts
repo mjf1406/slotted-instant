@@ -25,27 +25,51 @@ const _schema = i.schema({
             lastName: i.string(),
             googlePicture: i.string().optional(),
         }),
-        // ----------------------
-        //      Data Tables
-        // ----------------------
-        _5e_classes: i.entity({
-            // Primary identifiers
-            className: i.string().indexed(), // e.g., "Barbarian", "Wizard"
-            primarySource: i.string().indexed(), // e.g., "XPHB", "PHB"
-            classData: i.json(),
-            classFeatures: i.json().optional(), // Array of class features
-            subclasses: i.json().optional(), // Array of subclasses
-            subclassFeatures: i.json().optional(), // Array of subclass features
-            fullData: i.json(),
+        users: i.entity({
+            userName: i.string().indexed(),
+            userEmail: i.string().unique().indexed(),
+            userRole: i.string().indexed(), // "teacher" | "admin"
+            joinedDate: i.date().indexed(),
+            updatedDate: i.date().indexed(),
         }),
-
         // ----------------------
         //      User Tables
         // ----------------------
-        todos: i.entity({
-            text: i.string(),
-            done: i.boolean(),
-            createdAt: i.number(),
+        timetables: i.entity({
+            name: i.string().indexed(),
+            days: i.json(), // string[]
+            startTime: i.number().indexed(),
+            endTime: i.number().indexed(),
+        }),
+        classes: i.entity({
+            name: i.string().indexed(),
+            defaultDay: i.string().optional(),
+            defaultStart: i.string().optional(),
+            defaultEnd: i.string().optional(),
+            day: i.string().optional(),
+            start: i.string().optional(),
+            end: i.string().optional(),
+            color: i.string().indexed(),
+            iconName: i.string().indexed(),
+            iconPrefix: i.string().indexed(),
+            weekNumber: i.number().indexed().optional(),
+            year: i.number().indexed().optional(),
+        }),
+        slots: i.entity({
+            day: i.string().indexed(),
+            startTime: i.string().indexed(),
+            endTime: i.string().indexed(),
+        }),
+        slotClasses: i.entity({
+            weekNumber: i.number().indexed(),
+            year: i.number().indexed(),
+            size: i.string().indexed(), // "whole" | "split"
+            text: i.string().optional(),
+            complete: i.boolean().indexed(),
+            hidden: i.boolean().indexed(),
+        }),
+        disabledSlots: i.entity({
+            disableDate: i.date().indexed(),
         }),
     },
     links: {
@@ -77,12 +101,24 @@ const _schema = i.schema({
                 label: "profile",
             },
         },
+        usersToInstantUsers: {
+            forward: {
+                on: "users",
+                has: "one",
+                label: "instantUser",
+            },
+            reverse: {
+                on: "$users",
+                has: "one",
+                label: "user",
+            },
+        },
         // ----------------------
         //      User Tables
         // ----------------------
-        todosOwners: {
+        timetablesOwners: {
             forward: {
-                on: "todos",
+                on: "timetables",
                 has: "one",
                 label: "owner",
                 onDelete: "cascade",
@@ -90,7 +126,149 @@ const _schema = i.schema({
             reverse: {
                 on: "$users",
                 has: "many",
-                label: "ownerTodos",
+                label: "ownerTimetables",
+            },
+        },
+        classesOwners: {
+            forward: {
+                on: "classes",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerClasses",
+            },
+        },
+        classesTimetables: {
+            forward: {
+                on: "classes",
+                has: "one",
+                label: "timetable",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "timetables",
+                has: "many",
+                label: "classes",
+            },
+        },
+        classesLinkedClass: {
+            forward: {
+                on: "classes",
+                has: "one",
+                label: "linkedClass",
+            },
+            reverse: {
+                on: "classes",
+                has: "many",
+                label: "linkedClasses",
+            },
+        },
+        slotsOwners: {
+            forward: {
+                on: "slots",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerSlots",
+            },
+        },
+        slotsTimetables: {
+            forward: {
+                on: "slots",
+                has: "one",
+                label: "timetable",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "timetables",
+                has: "many",
+                label: "slots",
+            },
+        },
+        slotClassesOwners: {
+            forward: {
+                on: "slotClasses",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerSlotClasses",
+            },
+        },
+        slotClassesTimetables: {
+            forward: {
+                on: "slotClasses",
+                has: "one",
+                label: "timetable",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "timetables",
+                has: "many",
+                label: "slotClasses",
+            },
+        },
+        slotClassesSlots: {
+            forward: {
+                on: "slotClasses",
+                has: "one",
+                label: "slot",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "slots",
+                has: "many",
+                label: "slotClasses",
+            },
+        },
+        slotClassesClasses: {
+            forward: {
+                on: "slotClasses",
+                has: "one",
+                label: "class",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "classes",
+                has: "many",
+                label: "slotClasses",
+            },
+        },
+        disabledSlotsOwners: {
+            forward: {
+                on: "disabledSlots",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerDisabledSlots",
+            },
+        },
+        disabledSlotsSlots: {
+            forward: {
+                on: "disabledSlots",
+                has: "one",
+                label: "slot",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "slots",
+                has: "many",
+                label: "disabledSlots",
             },
         },
     },

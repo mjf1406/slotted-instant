@@ -31,11 +31,6 @@ const dataBind = [
 ];
 
 const rules = {
-    attrs: {
-        allow: {
-            $default: "false",
-        },
-    },
     // -----------------------------
     //      Admin Tables
     // -----------------------------
@@ -66,26 +61,59 @@ const rules = {
         },
         bind: adminBind,
     },
-    // ----------------------
-    //      Data Tables
-    // ----------------------
-    _5e_classes: {
-        allow: {
-            view: "isAuthenticated",
-            create: "false",
-            update: "false",
-            delete: "false",
-        },
-        bind: adminBind,
-    },
 
     // ----------------------
     //      User Tables
     // ----------------------
-    todos: {
+    users: {
         allow: {
             view: "isOwner || isGuestOwner",
-            create: "isAuthenticated && (size(data.ref('owner.ownerTodos.id')) < 6 || isPremium)",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    timetables: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    classes: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    slots: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    slotClasses: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    disabledSlots: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
             update: "isOwner || isGuestOwner",
             delete: "isOwner || isGuestOwner",
         },
