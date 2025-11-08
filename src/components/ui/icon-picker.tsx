@@ -497,6 +497,10 @@ const IconPicker = React.forwardRef<
                         <div
                             ref={categoryScrollRef}
                             className="flex flex-row gap-1 mt-2 overflow-x-auto pb-2"
+                            style={{ 
+                                WebkitOverflowScrolling: "touch",
+                                touchAction: "pan-x"
+                            }}
                             onWheel={handleCategoryWheel}
                         >
                             {categoryButtons}
@@ -505,7 +509,11 @@ const IconPicker = React.forwardRef<
                     <div
                         ref={parentRef}
                         className="max-h-60 overflow-auto"
-                        style={{ scrollbarWidth: "thin" }}
+                        style={{ 
+                            scrollbarWidth: "thin",
+                            WebkitOverflowScrolling: "touch",
+                            touchAction: "pan-y"
+                        }}
                         onWheel={(e) => {
                             // Handle wheel events for vertical scrolling
                             const element = parentRef.current;
