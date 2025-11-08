@@ -24,7 +24,7 @@ const initialState: TimetableContextState = {
 
 const TimetableContext = createContext<TimetableContextState>(initialState);
 
-export function TimetableProvider({
+function TimetableProviderContent({
     children,
 }: {
     children: React.ReactNode;
@@ -76,6 +76,25 @@ export function TimetableProvider({
         >
             {children}
         </TimetableContext.Provider>
+    );
+}
+
+export function TimetableProvider({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <>
+            <db.SignedIn>
+                <TimetableProviderContent>{children}</TimetableProviderContent>
+            </db.SignedIn>
+            <db.SignedOut>
+                <TimetableContext.Provider value={initialState}>
+                    {children}
+                </TimetableContext.Provider>
+            </db.SignedOut>
+        </>
     );
 }
 

@@ -51,6 +51,32 @@ interface CreateClassModalProps {
     classItem?: Class | null;
 }
 
+export function CreateClassModalContent({
+    isOpen,
+    setIsOpen,
+    trigger,
+    isControlled,
+    classItem,
+}: {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    trigger?: React.ReactNode;
+    isControlled: boolean;
+    classItem?: Class | null;
+}) {
+    return (
+        <db.SignedIn>
+            <CreateClassModalContentInner
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                trigger={trigger}
+                isControlled={isControlled}
+                classItem={classItem}
+            />
+        </db.SignedIn>
+    );
+}
+
 export function CreateClassModal({
     open: controlledOpen,
     onOpenChange: controlledOnOpenChange,
@@ -76,7 +102,7 @@ export function CreateClassModal({
     );
 }
 
-function CreateClassModalContent({
+function CreateClassModalContentInner({
     isOpen,
     setIsOpen,
     trigger,

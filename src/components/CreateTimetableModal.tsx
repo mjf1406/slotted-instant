@@ -50,6 +50,32 @@ interface CreateTimetableModalProps {
     timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number; color?: string; iconName?: string } | null;
 }
 
+function CreateTimetableModalContent({
+    isOpen,
+    setIsOpen,
+    trigger,
+    isControlled,
+    timetable,
+}: {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    trigger?: React.ReactNode;
+    isControlled: boolean;
+    timetable?: { id: string; name: string; days: string[]; startTime: number; endTime: number; color?: string; iconName?: string } | null;
+}) {
+    return (
+        <db.SignedIn>
+            <CreateTimetableModalContentInner
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                trigger={trigger}
+                isControlled={isControlled}
+                timetable={timetable}
+            />
+        </db.SignedIn>
+    );
+}
+
 export function CreateTimetableModal({
     open: controlledOpen,
     onOpenChange: controlledOnOpenChange,
@@ -81,7 +107,7 @@ function minutesToTime(minutes: number): string {
     return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
-function CreateTimetableModalContent({
+function CreateTimetableModalContentInner({
     isOpen,
     setIsOpen,
     trigger,
