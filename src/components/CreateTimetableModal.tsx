@@ -343,7 +343,7 @@ function CreateTimetableModalContentInner({
                         <p className="text-xs text-muted-foreground">
                             Select the days to include in your timetable.
                         </p>
-                        <div className="space-y-2">
+                        <div className="flex flex-row flex-wrap gap-3">
                             {WEEKDAYS.map((day) => (
                                 <div
                                     key={day}
@@ -373,67 +373,70 @@ function CreateTimetableModalContentInner({
                     </div>
 
                     <div className="space-y-2">
-                        <label
-                            htmlFor="startTime"
-                            className="text-sm font-medium leading-none"
-                        >
-                            Start Time
-                        </label>
-                        <Input
-                            id="startTime"
-                            type="time"
-                            value={formData.startTime}
-                            onChange={(e) => {
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    startTime: e.target.value,
-                                }));
-                                if (errors.startTime) {
-                                    setErrors((prev) => ({
-                                        ...prev,
-                                        startTime: undefined,
-                                    }));
-                                }
-                            }}
-                            aria-invalid={!!errors.startTime}
-                        />
-                        {errors.startTime && (
-                            <p className="text-sm text-destructive">
-                                {errors.startTime}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="endTime"
-                            className="text-sm font-medium leading-none"
-                        >
-                            End Time
-                        </label>
-                        <Input
-                            id="endTime"
-                            type="time"
-                            value={formData.endTime}
-                            onChange={(e) => {
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    endTime: e.target.value,
-                                }));
-                                if (errors.endTime) {
-                                    setErrors((prev) => ({
-                                        ...prev,
-                                        endTime: undefined,
-                                    }));
-                                }
-                            }}
-                            aria-invalid={!!errors.endTime}
-                        />
-                        {errors.endTime && (
-                            <p className="text-sm text-destructive">
-                                {errors.endTime}
-                            </p>
-                        )}
+                        <div className="flex flex-row gap-4">
+                            <div className="flex-1 space-y-2">
+                                <label
+                                    htmlFor="startTime"
+                                    className="text-sm font-medium leading-none"
+                                >
+                                    Start Time
+                                </label>
+                                <Input
+                                    id="startTime"
+                                    type="time"
+                                    value={formData.startTime}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            startTime: e.target.value,
+                                        }));
+                                        if (errors.startTime) {
+                                            setErrors((prev) => ({
+                                                ...prev,
+                                                startTime: undefined,
+                                            }));
+                                        }
+                                    }}
+                                    aria-invalid={!!errors.startTime}
+                                />
+                                {errors.startTime && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.startTime}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                <label
+                                    htmlFor="endTime"
+                                    className="text-sm font-medium leading-none"
+                                >
+                                    End Time
+                                </label>
+                                <Input
+                                    id="endTime"
+                                    type="time"
+                                    value={formData.endTime}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            endTime: e.target.value,
+                                        }));
+                                        if (errors.endTime) {
+                                            setErrors((prev) => ({
+                                                ...prev,
+                                                endTime: undefined,
+                                            }));
+                                        }
+                                    }}
+                                    aria-invalid={!!errors.endTime}
+                                />
+                                {errors.endTime && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.endTime}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
