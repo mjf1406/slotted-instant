@@ -376,6 +376,7 @@ const IconPicker = React.forwardRef<
                     className="relative w-full overscroll-contain"
                     style={{
                         height: `${virtualizer.getTotalSize()}px`,
+                        pointerEvents: "auto"
                     }}
                 >
                     {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -485,7 +486,17 @@ const IconPicker = React.forwardRef<
                         </Button>
                     )}
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-2">
+                <PopoverContent 
+                    className="w-64 p-2"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => {
+                        // Allow scrolling on mobile without dismissing
+                        const target = e.target as HTMLElement;
+                        if (parentRef.current?.contains(target) || categoryScrollRef.current?.contains(target)) {
+                            e.preventDefault();
+                        }
+                    }}
+                >
                     {searchable && (
                         <Input
                             placeholder={searchPlaceholder}
@@ -499,6 +510,7 @@ const IconPicker = React.forwardRef<
                             className="flex flex-row gap-1 mt-2 overflow-x-auto pb-2"
                             style={{ 
                                 WebkitOverflowScrolling: "touch",
+                                overscrollBehavior: "contain",
                                 touchAction: "pan-x"
                             }}
                             onWheel={handleCategoryWheel}
@@ -512,6 +524,7 @@ const IconPicker = React.forwardRef<
                         style={{ 
                             scrollbarWidth: "thin",
                             WebkitOverflowScrolling: "touch",
+                            overscrollBehavior: "contain",
                             touchAction: "pan-y"
                         }}
                         onWheel={(e) => {
