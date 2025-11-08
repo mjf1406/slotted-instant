@@ -1,0 +1,114 @@
+<!-- @format -->
+
+Feature Driven Architecture (FDA): A Scalable Way to Structure Your Next.js Applications
+Julien Mauclair
+Julien Mauclair
+3 min read
+·
+Oct 30, 2025
+Press enter or click to view image in full size
+
+When working on modern React and Next.js projects, folder organization tends to break down as the app grows.
+You start with something clean, and six months later you’re digging through a maze of components, hooks, and utils folders trying to understand which file actually does what.
+
+Feature Driven Architecture (FDA) is a pattern designed to solve that.
+It organizes your application around features, not file types.
+Each feature becomes a self-contained unit — small, composable, and easy to reason about.
+What is FDA?
+
+Feature Driven Architecture (FDA) is a project organization model where each feature owns everything it needs: API logic, UI components, hooks, schemas, stores, and types.
+
+Instead of this:
+
+src/
+├── components/
+├── hooks/
+├── stores/
+├── schemas/
+├── utils/
+
+You get this:
+
+src/
+└── features/
+└── users/
+├── actions/ → Server actions (Next.js server actions)
+├── api/ → API routes or handlers
+├── components/ → UI components specific to this feature
+├── hooks/ → React hooks / client logic
+├── lib/ → Pure utilities and helpers
+├── queries/ → React Query hooks
+├── services/ → Business logic or external integrations
+├── schemas/ → Zod validation schemas
+├── stores/ → Zustand or Jotai stores
+├── types/ → TypeScript types and interfaces
+└── index.ts → Public exports for the feature
+
+Each directory encapsulates one complete feature.
+You can open it and immediately understand its data flow, its components, and how it interacts with the rest of the system.
+Why organize code this way?
+
+Because scaling frontend projects is not just about performance — it’s about clarity.
+
+Most architectures fail when the codebase grows and developers can no longer see where logic belongs.
+FDA addresses this by enforcing natural boundaries around each feature.
+
+1. Autonomy
+
+A feature can evolve independently.
+It can be refactored, versioned, or even extracted into its own package with minimal friction. 2. Maintainability
+
+When every feature owns its logic, there’s no global soup of “helpers” or “components” to manage.
+A new developer can onboard quickly by reading one folder instead of the entire project. 3. Testability
+
+Since features are isolated, testing becomes straightforward — you test one vertical slice at a time, from API to UI. 4. Compatibility with Next.js
+
+FDA fits naturally with the App Router, Route Handlers, and Server Actions.
+Each feature can define its own API endpoints and export them into the Next.js routing layer.
+How it works in practice
+
+Here’s a simple example of how FDA integrates with Next.js route handlers.
+Get Julien Mauclair’s stories in your inbox
+
+Join Medium for free to get updates from this writer.
+
+src/features/admin/api/getUsers.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { getAllUsers } from "../services/userService";
+
+export async function GET(req: NextRequest) {
+const users = await getAllUsers();
+return NextResponse.json(users);
+}
+
+src/app/api/admin/users/route.ts
+
+export { GET } from "@/features/admin/api/getUsers";
+
+This keeps app/api clean and declarative, while the actual logic lives within the feature.
+The same structure works for mutations, queries, and server actions.
+The index pattern
+
+Each feature exposes a controlled public surface via an index.ts file:
+
+export _ from "./actions/createUserAction";
+export _ from "./queries/useUsersQuery";
+export _ from "./components/UserTable";
+export _ from "./schemas/userSchema";
+
+Then you can import everything you need with:
+
+import { useUsersQuery, UserTable } from "@/features/admin";
+
+This creates a clear boundary between what’s internal to the feature and what’s meant to be reused.
+A mindset, not just a folder structure
+
+Feature Driven Architecture is more than just a naming convention.
+It’s a mindset that encourages modularity, ownership, and clarity.
+It treats each feature as a small, autonomous product — something that could, one day, live on its own.
+
+If you’ve ever opened a React project and thought “where does this logic actually belong?”, FDA gives you a consistent answer.
+
+Organize by what your app does, not by what it’s made of.
+That’s the core of Feature Driven Architecture.
