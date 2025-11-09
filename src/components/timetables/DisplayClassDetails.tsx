@@ -217,7 +217,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                             {!isEditMode && onSave && (
                                 <Button
                                     variant="outline"
-                                    className="text-foreground"
+                                    className="text-foreground bg-background!"
                                     onClick={() => setIsEditMode(true)}
                                 >
                                     <Edit
