@@ -305,6 +305,14 @@ const IconPicker = React.forwardRef<
         );
 
         const categoryScrollRef = React.useRef<HTMLDivElement>(null);
+        const categoryTouchDataRef = React.useRef<{
+            x: number;
+            scrollLeft: number;
+        } | null>(null);
+        const iconsTouchDataRef = React.useRef<{
+            y: number;
+            scrollTop: number;
+        } | null>(null);
 
         // Handle wheel events for horizontal category scroll
         const handleCategoryWheel = useCallback(
@@ -317,6 +325,64 @@ const IconPicker = React.forwardRef<
             },
             []
         );
+
+        const handleCategoryTouchStart = (
+            e: React.TouchEvent<HTMLDivElement>
+        ) => {
+            const element = categoryScrollRef.current;
+            if (!element) return;
+            const touch = e.touches[0];
+            categoryTouchDataRef.current = {
+                x: touch.clientX,
+                scrollLeft: element.scrollLeft,
+            };
+        };
+
+        const handleCategoryTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+            const element = categoryScrollRef.current;
+            const data = categoryTouchDataRef.current;
+            if (!element || !data) return;
+
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - data.x;
+
+            if (Math.abs(deltaX) > 0) {
+                e.preventDefault();
+                element.scrollLeft = data.scrollLeft - deltaX;
+            }
+        };
+
+        const resetCategoryTouch = () => {
+            categoryTouchDataRef.current = null;
+        };
+
+        const handleIconsTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+            const element = parentRef.current;
+            if (!element) return;
+            const touch = e.touches[0];
+            iconsTouchDataRef.current = {
+                y: touch.clientY,
+                scrollTop: element.scrollTop,
+            };
+        };
+
+        const handleIconsTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+            const element = parentRef.current;
+            const data = iconsTouchDataRef.current;
+            if (!element || !data) return;
+
+            const touch = e.touches[0];
+            const deltaY = touch.clientY - data.y;
+
+            if (Math.abs(deltaY) > 0) {
+                e.preventDefault();
+                element.scrollTop = data.scrollTop - deltaY;
+            }
+        };
+
+        const resetIconsTouch = () => {
+            iconsTouchDataRef.current = null;
+        };
 
         const categoryButtons = useMemo(() => {
             if (!categorized || search.trim() !== "") return null;
@@ -514,6 +580,10 @@ const IconPicker = React.forwardRef<
                                 touchAction: "pan-x"
                             }}
                             onWheel={handleCategoryWheel}
+                            onTouchStart={handleCategoryTouchStart}
+                            onTouchMove={handleCategoryTouchMove}
+                            onTouchEnd={resetCategoryTouch}
+                            onTouchCancel={resetCategoryTouch}
                         >
                             {categoryButtons}
                         </div>
@@ -527,6 +597,10 @@ const IconPicker = React.forwardRef<
                             overscrollBehavior: "contain",
                             touchAction: "pan-y"
                         }}
+                        onTouchStart={handleIconsTouchStart}
+                        onTouchMove={handleIconsTouchMove}
+                        onTouchEnd={resetIconsTouch}
+                        onTouchCancel={resetIconsTouch}
                         onWheel={(e) => {
                             // Handle wheel events for vertical scrolling
                             const element = parentRef.current;
