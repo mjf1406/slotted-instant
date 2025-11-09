@@ -4,7 +4,12 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Edit } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -185,6 +190,12 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                 showCloseButton={false}
             >
                 <style>{contentStyle}</style>
+                <DialogTitle className="sr-only">
+                    {classDetails.name} - {formattedDate}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                    Class details for {classDetails.name} on {formattedDate}
+                </DialogDescription>
                 <div className="flex h-full flex-col">
                     <div
                         className="flex items-center justify-between p-6"
