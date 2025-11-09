@@ -8,6 +8,13 @@ An app for teachers to plan their lessons in certain time slots.
 
 ## Change Log
 
+### 2025/11/09 12:48
+
+-   added checkmark on completed classes
+-   created display dialog with edit mode
+-   added bgColor and textColor to classes
+-   when sidebar is collapsed, the class icons render properly and clicking one opens the class action menu
+
 ### 2025/11/09 09:52
 
 -   time slots appear in UI now

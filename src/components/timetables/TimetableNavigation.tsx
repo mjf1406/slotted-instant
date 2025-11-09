@@ -60,7 +60,7 @@ export function TimetableNavigation({
             : formatDayDate(currentDate);
 
     return (
-        <div className="sticky top-16 z-40 grid grid-cols-3 items-center gap-4 mb-0 flex-wrap bg-background py-2 border-b rounded-lg">
+        <div className="sticky top-16 z-40 grid grid-cols-3 items-center gap-4 mb-0 flex-wrap bg-background py-2 border-b rounded-lg group-has-data-[collapsible=icon]/sidebar-wrapper:top-12">
             <div></div>
             <div className="flex items-center justify-center gap-2 shrink-0">
                 <Button

@@ -5,7 +5,8 @@ import type { Class } from "@/lib/types";
 
 export interface FormErrors {
     name?: string;
-    color?: string;
+    bgColor?: string;
+    textColor?: string;
     iconName?: string;
     defaultText?: string;
 }
@@ -19,7 +20,8 @@ export interface CreateClassModalProps {
 
 export interface FormData {
     name: string;
-    color: string;
+    bgColor: string;
+    textColor: string;
     iconName: IconName | "";
     includeWeekInfo: boolean;
     defaultText: string;

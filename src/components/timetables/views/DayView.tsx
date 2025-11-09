@@ -11,7 +11,7 @@ import {
     formatTimeString,
     getYearAndWeekNumber,
     getWeekStart,
-} from "./utils";
+} from "../utils";
 import { useSettings } from "@/lib/settings-context";
 import {
     DropdownMenu,
@@ -94,7 +94,10 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
         let currentMinutes = startTimeMinutes;
         while (currentMinutes < endTimeMinutes) {
             intervals.push({
-                time: minutesToTime(currentMinutes, settings.timeFormat as "12" | "24"),
+                time: minutesToTime(
+                    currentMinutes,
+                    settings.timeFormat as "12" | "24"
+                ),
                 minutes: currentMinutes,
             });
             currentMinutes += 30; // 30-minute intervals
@@ -188,9 +191,7 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
 
         return slot.disabledSlots.some((disabledSlot) => {
             const disableDate = new Date(disabledSlot.disableDate);
-            return (
-                disableDate >= weekStart && disableDate < nextWeekStart
-            );
+            return disableDate >= weekStart && disableDate < nextWeekStart;
         });
     };
 
@@ -211,10 +212,12 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
         <div className="w-full overflow-x-auto -mx-1">
             <div className="min-w-full">
                 {/* Header row with day name */}
-                <div 
+                <div
                     className="grid border-b bg-muted/50"
                     style={{
-                        gridTemplateColumns: `${settings.timeFormat === "12" ? "96px" : "80px"} 1fr`,
+                        gridTemplateColumns: `${
+                            settings.timeFormat === "12" ? "96px" : "80px"
+                        } 1fr`,
                     }}
                 >
                     <div className="border-r p-2 text-sm font-medium">Time</div>
@@ -253,9 +256,11 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                     </div>
 
                     {/* Day column with slots */}
-                    <div className={`absolute right-0 top-0 bottom-0 ${
-                        settings.timeFormat === "12" ? "left-24" : "left-20"
-                    }`}>
+                    <div
+                        className={`absolute right-0 top-0 bottom-0 ${
+                            settings.timeFormat === "12" ? "left-24" : "left-20"
+                        }`}
+                    >
                         <div className="relative h-full border-r">
                             {/* Render slots for this day */}
                             {daySlots.map((slot) => {
@@ -279,8 +284,19 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                                                 <div className="flex items-start justify-between gap-1">
                                                     <div className="flex-1">
                                                         <div className="text-xs font-medium mb-1 text-foreground">
-                                                            {formatTimeString(slot.startTime, settings.timeFormat as "12" | "24")}{" "}
-                                                            - {formatTimeString(slot.endTime, settings.timeFormat as "12" | "24")}
+                                                            {formatTimeString(
+                                                                slot.startTime,
+                                                                settings.timeFormat as
+                                                                    | "12"
+                                                                    | "24"
+                                                            )}{" "}
+                                                            -{" "}
+                                                            {formatTimeString(
+                                                                slot.endTime,
+                                                                settings.timeFormat as
+                                                                    | "12"
+                                                                    | "24"
+                                                            )}
                                                         </div>
                                                         {classesInSlot.length >
                                                             0 && (
@@ -296,14 +312,33 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                                                                             className="text-xs p-1.5 rounded border bg-background/80 backdrop-blur-sm"
                                                                             style={{
                                                                                 backgroundColor:
-                                                                                    slotClass
-                                                                                        .class
+                                                                                    (
+                                                                                        slotClass.class as any
+                                                                                    )
+                                                                                        ?.bgColor ||
+                                                                                    (
+                                                                                        slotClass.class as any
+                                                                                    )
                                                                                         ?.color
-                                                                                        ? `${slotClass.class.color}20`
+                                                                                        ? `${
+                                                                                              (
+                                                                                                  slotClass.class as any
+                                                                                              )
+                                                                                                  ?.bgColor ||
+                                                                                              (
+                                                                                                  slotClass.class as any
+                                                                                              )
+                                                                                                  ?.color
+                                                                                          }20`
                                                                                         : undefined,
                                                                                 borderColor:
-                                                                                    slotClass
-                                                                                        .class
+                                                                                    (
+                                                                                        slotClass.class as any
+                                                                                    )
+                                                                                        ?.bgColor ||
+                                                                                    (
+                                                                                        slotClass.class as any
+                                                                                    )
                                                                                         ?.color ||
                                                                                     undefined,
                                                                             }}
@@ -362,4 +397,3 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
         </div>
     );
 }
-

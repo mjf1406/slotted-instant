@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { db } from "./db";
 import type { Timetable } from "./types";
 
@@ -32,6 +32,8 @@ function TimetableProviderContent({
     const user = db.useUser();
     const [selectedTimetable, setSelectedTimetable] =
         useState<Timetable | null>(null);
+    // Use ref to track selected timetable ID to prevent infinite loops
+    const selectedTimetableIdRef = useRef<string | null>(null);
 
     const { data, isLoading, error } = db.useQuery(
         user?.id
@@ -52,6 +54,7 @@ function TimetableProviderContent({
     const timetables = (data?.timetables || []) as Timetable[];
 
     // Sync selected timetable with query params
+    // This effect should only run when query params change or timetables load
     useEffect(() => {
         if (typeof window === "undefined" || isLoading || !user?.id) return;
 
@@ -60,23 +63,33 @@ function TimetableProviderContent({
 
         if (timetableId && timetables.length > 0) {
             const timetable = timetables.find((t) => t.id === timetableId);
-            if (timetable && timetable.id !== selectedTimetable?.id) {
+            // Only update if the timetable exists and is different from current selection
+            if (timetable && timetable.id !== selectedTimetableIdRef.current) {
+                selectedTimetableIdRef.current = timetable.id;
                 setSelectedTimetable(timetable);
             }
         } else if (
             !timetableId &&
             timetables.length > 0 &&
-            !selectedTimetable &&
+            !selectedTimetableIdRef.current &&
             !error
         ) {
             // Set first timetable as selected when timetables load (if no query param)
-            setSelectedTimetable(timetables[0]);
+            const firstTimetable = timetables[0];
+            selectedTimetableIdRef.current = firstTimetable.id;
+            setSelectedTimetable(firstTimetable);
         }
-    }, [isLoading, timetables, selectedTimetable, error, user?.id]);
+    }, [isLoading, timetables, error, user?.id]);
 
     // Update query params when selected timetable changes
     useEffect(() => {
-        if (typeof window === "undefined" || !selectedTimetable) return;
+        if (typeof window === "undefined" || !selectedTimetable) {
+            selectedTimetableIdRef.current = null;
+            return;
+        }
+
+        // Update ref to match current selection
+        selectedTimetableIdRef.current = selectedTimetable.id;
 
         const params = new URLSearchParams(window.location.search);
         const currentTimetableId = params.get("timetableId");

@@ -9,10 +9,12 @@ import type { Class } from "@/lib/types";
 import type { FormData, FormErrors } from "./types";
 import { validateForm } from "./validation";
 import { getYearAndWeekNumber } from "./utils";
+import { suggestTextColor } from "@/lib/color-utils";
 
 const DEFAULT_FORM_DATA: FormData = {
     name: "",
-    color: "#000000",
+    bgColor: "#000000",
+    textColor: "#FFFFFF",
     iconName: "",
     includeWeekInfo: false,
     defaultText: "",
@@ -34,7 +36,8 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
         if (isOpen && classItem) {
             setFormData({
                 name: classItem.name,
-                color: classItem.color,
+                bgColor: (classItem as any).bgColor || (classItem as any).color || "#000000",
+                textColor: (classItem as any).textColor || suggestTextColor((classItem as any).bgColor || (classItem as any).color || "#000000"),
                 iconName: (classItem.iconName as IconName) || "",
                 includeWeekInfo: !!(classItem.weekNumber && classItem.year),
                 defaultText: classItem.defaultText || "",
@@ -56,10 +59,19 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
         field: K,
         value: FormData[K]
     ) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
+        setFormData((prev) => {
+            const updated = {
+                ...prev,
+                [field]: value,
+            };
+            
+            // Auto-suggest textColor when bgColor changes
+            if (field === "bgColor" && typeof value === "string") {
+                updated.textColor = suggestTextColor(value);
+            }
+            
+            return updated;
+        });
         // Clear error for this field
         if (errors[field as keyof FormErrors]) {
             setErrors((prev) => ({
@@ -91,7 +103,8 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
                 await db.transact(
                     db.tx.classes[classItem.id].update({
                         name: formData.name.trim(),
-                        color: formData.color,
+                        bgColor: formData.bgColor,
+                        textColor: formData.textColor,
                         iconName: formData.iconName || "",
                         iconPrefix: "fas", // Keep for backward compatibility
                         weekNumber: formData.includeWeekInfo
@@ -108,7 +121,8 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
                     db.tx.classes[classId]
                         .update({
                             name: formData.name.trim(),
-                            color: formData.color,
+                            bgColor: formData.bgColor,
+                            textColor: formData.textColor,
                             iconName: formData.iconName || "",
                             iconPrefix: "fas", // Keep for backward compatibility
                             weekNumber: formData.includeWeekInfo

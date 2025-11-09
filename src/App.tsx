@@ -89,7 +89,7 @@ function TimetableView() {
     }
 
     return (
-        <div className="flex flex-1 flex-col gap-0 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-0 px-4 pb-4">
             <TimetableNavigation
                 viewMode={viewMode}
                 currentWeekStart={currentWeekStart}

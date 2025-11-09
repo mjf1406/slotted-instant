@@ -9,8 +9,12 @@ export function validateForm(formData: FormData): FormErrors {
         errors.name = "Name is required";
     }
 
-    if (!formData.color.trim()) {
-        errors.color = "Color is required";
+    if (!formData.bgColor.trim()) {
+        errors.bgColor = "Background color is required";
+    }
+
+    if (!formData.textColor.trim()) {
+        errors.textColor = "Text color is required";
     }
 
     return errors;

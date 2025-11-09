@@ -20,7 +20,10 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import ResponsiveAlertDialog from "@/components/ui/responsive-alert-dialog";
 import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
@@ -73,66 +76,138 @@ function DeleteClassDialog({
 function ClassItem({ classItem }: { classItem: Class }) {
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+    const [dropdownOpen, setDropdownOpen] = React.useState(false);
     const { state } = useSidebar();
+    const isCollapsed = state === "collapsed";
 
     return (
         <>
             <SidebarMenuItem>
-                <div className="flex items-center w-full group">
-                    <SidebarMenuButton
-                        className="flex-1"
-                        tooltip={classItem.name}
-                    >
-                        {classItem.iconName ? (
-                            <Icon
-                                name={classItem.iconName as IconName}
-                                className="size-4 shrink-0"
-                                style={{ color: classItem.color }}
-                            />
-                        ) : (
-                            <div
-                                className="size-2 rounded-full"
-                                style={{ backgroundColor: classItem.color }}
-                            />
-                        )}
-                        <span className="truncate">{classItem.name}</span>
-                    </SidebarMenuButton>
-                    {state !== "collapsed" && (
-                        <DropdownMenu>
+                <div
+                    className="flex items-center w-full group rounded-md"
+                    style={{
+                        backgroundColor: classItem.bgColor || "#ffffff",
+                        color: classItem.textColor || "#000000",
+                    }}
+                >
+                    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                        {isCollapsed ? (
                             <DropdownMenuTrigger asChild>
-                                <button
-                                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 h-auto text-muted-foreground hover:text-foreground"
-                                    onClick={(e) => e.stopPropagation()}
-                                    aria-label="Class actions"
+                                <SidebarMenuButton
+                                    className="flex-1"
+                                    tooltip={classItem.name}
+                                    style={{
+                                        backgroundColor: "transparent",
+                                        color: classItem.textColor || "#000000",
+                                    }}
                                 >
-                                    <MoreHorizontal className="size-4" />
-                                </button>
+                                    {classItem.iconName ? (
+                                        <Icon
+                                            name={classItem.iconName as IconName}
+                                            className="size-4 shrink-0"
+                                            style={{ color: classItem.textColor || "#000000" }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="size-2 rounded-full"
+                                            style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
+                                        />
+                                    )}
+                                    <span className="truncate">{classItem.name}</span>
+                                </SidebarMenuButton>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditModalOpen(true);
+                        ) : (
+                            <>
+                                <SidebarMenuButton
+                                    className="flex-1"
+                                    tooltip={classItem.name}
+                                    style={{
+                                        backgroundColor: "transparent",
+                                        color: classItem.textColor || "#000000",
                                     }}
-                                    className="gap-2"
                                 >
-                                    <Edit className="size-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteDialogOpen(true);
-                                    }}
-                                    variant="destructive"
-                                    className="gap-2"
-                                >
-                                    <Trash2 className="size-4" />
-                                    Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                                    {classItem.iconName ? (
+                                        <Icon
+                                            name={classItem.iconName as IconName}
+                                            className="size-4 shrink-0"
+                                            style={{ color: classItem.textColor || "#000000" }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="size-2 rounded-full"
+                                            style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
+                                        />
+                                    )}
+                                    <span className="truncate">{classItem.name}</span>
+                                </SidebarMenuButton>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                        aria-label="Class actions"
+                                        style={{
+                                            color: classItem.textColor || "#000000",
+                                        }}
+                                    >
+                                        <MoreHorizontal className="size-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                            </>
+                        )}
+                        <DropdownMenuContent align="end">
+                            {isCollapsed && (
+                                <>
+                                    <DropdownMenuLabel
+                                        className="flex items-center gap-2 rounded-md"
+                                        style={{
+                                            backgroundColor: classItem.bgColor || "#ffffff",
+                                            color: classItem.textColor || "#000000",
+                                        }}
+                                    >
+                                        {classItem.iconName ? (
+                                            <Icon
+                                                name={classItem.iconName as IconName}
+                                                className="size-4 shrink-0"
+                                                style={{ color: classItem.textColor || "#000000" }}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="size-2 rounded-full shrink-0"
+                                                style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
+                                            />
+                                        )}
+                                        <span className="truncate">{classItem.name}</span>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditModalOpen(true);
+                                    setDropdownOpen(false);
+                                }}
+                                className="gap-2"
+                            >
+                                <Edit className="size-4" />
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteDialogOpen(true);
+                                    setDropdownOpen(false);
+                                }}
+                                variant="destructive"
+                                className="gap-2"
+                            >
+                                <Trash2 className="size-4" />
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </SidebarMenuItem>
 

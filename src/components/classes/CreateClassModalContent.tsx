@@ -88,38 +88,73 @@ export function CreateClassModalContent({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="color"
-                            className="text-sm font-medium leading-none"
-                        >
-                            Color
-                        </label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                id="color"
-                                type="color"
-                                value={formData.color}
-                                onChange={(e) =>
-                                    handleFieldChange("color", e.target.value)
-                                }
-                                className="h-10 w-20"
-                            />
-                            <Input
-                                type="text"
-                                value={formData.color}
-                                onChange={(e) =>
-                                    handleFieldChange("color", e.target.value)
-                                }
-                                placeholder="#000000"
-                            />
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="bgColor"
+                                className="text-sm font-medium leading-none"
+                            >
+                                Background Color
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="bgColor"
+                                    type="color"
+                                    value={formData.bgColor}
+                                    onChange={(e) =>
+                                        handleFieldChange("bgColor", e.target.value)
+                                    }
+                                    className="h-10 w-20"
+                                />
+                                <Input
+                                    type="text"
+                                    value={formData.bgColor}
+                                    onChange={(e) =>
+                                        handleFieldChange("bgColor", e.target.value)
+                                    }
+                                    placeholder="#000000"
+                                />
+                            </div>
+                            {errors.bgColor && (
+                                <p className="text-sm text-destructive">
+                                    {errors.bgColor}
+                                </p>
+                            )}
                         </div>
-                        {errors.color && (
-                            <p className="text-sm text-destructive">
-                                {errors.color}
-                            </p>
-                        )}
+
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="textColor"
+                                className="text-sm font-medium leading-none"
+                            >
+                                Text Color
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="textColor"
+                                    type="color"
+                                    value={formData.textColor}
+                                    onChange={(e) =>
+                                        handleFieldChange("textColor", e.target.value)
+                                    }
+                                    className="h-10 w-20"
+                                />
+                                <Input
+                                    type="text"
+                                    value={formData.textColor}
+                                    onChange={(e) =>
+                                        handleFieldChange("textColor", e.target.value)
+                                    }
+                                    placeholder="#FFFFFF"
+                                />
+                            </div>
+                            {errors.textColor && (
+                                <p className="text-sm text-destructive">
+                                    {errors.textColor}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-2">
