@@ -2,14 +2,17 @@
 
 import type { FormData, FormErrors } from "./types";
 
-export function validateForm(formData: FormData): FormErrors {
+export function validateForm(
+    formData: FormData,
+    isEditMode: boolean = false
+): FormErrors {
     const errors: FormErrors = {};
 
     if (!formData.timetableId) {
         errors.timetableId = "Please select a timetable";
     }
 
-    if (formData.days.length === 0) {
+    if (!isEditMode && formData.days.length === 0) {
         errors.days = "Select at least one day";
     }
 

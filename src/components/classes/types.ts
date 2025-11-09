@@ -7,6 +7,7 @@ export interface FormErrors {
     name?: string;
     color?: string;
     iconName?: string;
+    defaultText?: string;
 }
 
 export interface CreateClassModalProps {
@@ -21,5 +22,6 @@ export interface FormData {
     color: string;
     iconName: IconName | "";
     includeWeekInfo: boolean;
+    defaultText: string;
 }
 

@@ -4,6 +4,8 @@
 
 import React, { useState } from "react";
 import { db } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { CreateClassModalContent } from "./CreateClassModalContent";
 import type { CreateClassModalProps } from "./types";
 
@@ -48,11 +50,21 @@ export function CreateClassModal({
             : setInternalOpen;
     const isControlled = controlledOpen !== undefined;
 
+    const defaultTrigger = (
+        <Button variant="outline">
+            <Plus className="h-4 w-4" />
+            Create Class
+        </Button>
+    );
+
+    // Only use default trigger if not controlled and no trigger provided
+    const finalTrigger = trigger || (!isControlled ? defaultTrigger : undefined);
+
     return (
         <CreateClassModalContentWrapper
             isOpen={isOpen}
             setIsOpen={setIsOpen}
-            trigger={trigger}
+            trigger={finalTrigger}
             isControlled={isControlled}
             classItem={classItem}
         />

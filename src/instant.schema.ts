@@ -56,11 +56,13 @@ const _schema = i.schema({
             iconPrefix: i.string().indexed(),
             weekNumber: i.number().indexed().optional(),
             year: i.number().indexed().optional(),
+            defaultText: i.string().optional(),
         }),
         slots: i.entity({
             day: i.string().indexed(),
             startTime: i.string().indexed(),
             endTime: i.string().indexed(),
+            disabled: i.boolean().indexed().optional(),
         }),
         slotClasses: i.entity({
             weekNumber: i.number().indexed(),
@@ -72,6 +74,10 @@ const _schema = i.schema({
         }),
         disabledSlots: i.entity({
             disableDate: i.date().indexed(),
+        }),
+        userSettings: i.entity({
+            weekStartDay: i.string().indexed(), // "sunday" | "monday"
+            timeFormat: i.string().indexed(), // "12" | "24"
         }),
     },
     links: {
@@ -271,6 +277,19 @@ const _schema = i.schema({
                 on: "slots",
                 has: "many",
                 label: "disabledSlots",
+            },
+        },
+        userSettingsOwners: {
+            forward: {
+                on: "userSettings",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "one",
+                label: "userSettings",
             },
         },
     },

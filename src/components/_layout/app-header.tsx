@@ -2,8 +2,10 @@
 
 "use client";
 
+import { useEffect, useState } from "react";
 import { ModeToggle } from "@/components/_themes/theme-toggle";
 import { CreateTimeSlotDialog } from "@/components/timeslots";
+import { CreateClassModal } from "@/components/classes";
 import { useTimetable } from "@/lib/timetable-context";
 import { db } from "@/lib/db";
 import {
@@ -31,8 +33,23 @@ function TimetableBreadcrumbContent() {
 }
 
 export function AppHeader() {
+    const [isSettingsPage, setIsSettingsPage] = useState(false);
+
+    useEffect(() => {
+        const checkParams = () => {
+            if (typeof window !== "undefined") {
+                const params = new URLSearchParams(window.location.search);
+                setIsSettingsPage(params.get("page") === "settings");
+            }
+        };
+
+        checkParams();
+        window.addEventListener("popstate", checkParams);
+        return () => window.removeEventListener("popstate", checkParams);
+    }, []);
+
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 bg-background border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
                 <db.SignedIn>
@@ -42,22 +59,31 @@ export function AppHeader() {
                     />
                     <Breadcrumb>
                         <BreadcrumbList>
-                            <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="#">
-                                    Timetables
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>
-                                    <TimetableBreadcrumb />
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
+                            {isSettingsPage ? (
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>Settings</BreadcrumbPage>
+                                </BreadcrumbItem>
+                            ) : (
+                                <>
+                                    <BreadcrumbItem className="hidden md:block">
+                                        <BreadcrumbLink href="#">
+                                            Timetables
+                                        </BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    <BreadcrumbSeparator className="hidden md:block" />
+                                    <BreadcrumbItem>
+                                        <BreadcrumbPage>
+                                            <TimetableBreadcrumb />
+                                        </BreadcrumbPage>
+                                    </BreadcrumbItem>
+                                </>
+                            )}
                         </BreadcrumbList>
                     </Breadcrumb>
                 </db.SignedIn>
             </div>
             <div className="ml-auto flex items-center gap-2 px-4">
+                <CreateClassModal />
                 <CreateTimeSlotDialog />
                 <ModeToggle />
             </div>

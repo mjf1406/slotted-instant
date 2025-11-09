@@ -64,7 +64,7 @@ export function CreateClassModalContent({
                     ? "Update the class details."
                     : "Enter the details for your new class."
             }
-            contentClassName="sm:max-w-[425px]"
+            contentClassName="sm:max-w-[600px]"
         >
             <form onSubmit={onSubmit} className="space-y-6">
                 <div className="space-y-2">
@@ -88,67 +88,93 @@ export function CreateClassModalContent({
                     )}
                 </div>
 
-                <div className="space-y-2">
-                    <label
-                        htmlFor="color"
-                        className="text-sm font-medium leading-none"
-                    >
-                        Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            id="color"
-                            type="color"
-                            value={formData.color}
-                            onChange={(e) =>
-                                handleFieldChange("color", e.target.value)
-                            }
-                            className="h-10 w-20"
-                        />
-                        <Input
-                            type="text"
-                            value={formData.color}
-                            onChange={(e) =>
-                                handleFieldChange("color", e.target.value)
-                            }
-                            placeholder="#000000"
-                        />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="color"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Color
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="color"
+                                type="color"
+                                value={formData.color}
+                                onChange={(e) =>
+                                    handleFieldChange("color", e.target.value)
+                                }
+                                className="h-10 w-20"
+                            />
+                            <Input
+                                type="text"
+                                value={formData.color}
+                                onChange={(e) =>
+                                    handleFieldChange("color", e.target.value)
+                                }
+                                placeholder="#000000"
+                            />
+                        </div>
+                        {errors.color && (
+                            <p className="text-sm text-destructive">
+                                {errors.color}
+                            </p>
+                        )}
                     </div>
-                    {errors.color && (
-                        <p className="text-sm text-destructive">
-                            {errors.color}
-                        </p>
-                    )}
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="iconName"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Icon
+                        </label>
+                        <IconPicker
+                            value={formData.iconName || undefined}
+                            onValueChange={(value) =>
+                                handleFieldChange("iconName", value)
+                            }
+                            triggerPlaceholder="Select an icon"
+                        >
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                {formData.iconName ? (
+                                    <>
+                                        <Icon name={formData.iconName} />
+                                        {formData.iconName}
+                                    </>
+                                ) : (
+                                    "Select an icon"
+                                )}
+                            </Button>
+                        </IconPicker>
+                    </div>
                 </div>
 
                 <div className="space-y-2">
                     <label
-                        htmlFor="iconName"
+                        htmlFor="defaultText"
                         className="text-sm font-medium leading-none"
                     >
-                        Icon
+                        Default Text
                     </label>
-                    <IconPicker
-                        value={formData.iconName || undefined}
-                        onValueChange={(value) =>
-                            handleFieldChange("iconName", value)
+                    <textarea
+                        id="defaultText"
+                        className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Enter default text for this class..."
+                        value={formData.defaultText}
+                        onChange={(e) =>
+                            handleFieldChange("defaultText", e.target.value)
                         }
-                        triggerPlaceholder="Select an icon"
-                    >
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                        >
-                            {formData.iconName ? (
-                                <>
-                                    <Icon name={formData.iconName} />
-                                    {formData.iconName}
-                                </>
-                            ) : (
-                                "Select an icon"
-                            )}
-                        </Button>
-                    </IconPicker>
+                        aria-invalid={!!errors.defaultText}
+                    />
+                    {errors.defaultText && (
+                        <p className="text-sm text-destructive">
+                            {errors.defaultText}
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-2">

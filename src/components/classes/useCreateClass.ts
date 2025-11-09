@@ -15,6 +15,7 @@ const DEFAULT_FORM_DATA: FormData = {
     color: "#000000",
     iconName: "",
     includeWeekInfo: false,
+    defaultText: "",
 };
 
 export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
@@ -36,6 +37,7 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
                 color: classItem.color,
                 iconName: (classItem.iconName as IconName) || "",
                 includeWeekInfo: !!(classItem.weekNumber && classItem.year),
+                defaultText: classItem.defaultText || "",
             });
         } else if (isOpen && !classItem) {
             setFormData(DEFAULT_FORM_DATA);
@@ -96,6 +98,7 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
                             ? weekNumber
                             : null,
                         year: formData.includeWeekInfo ? year : null,
+                        defaultText: formData.defaultText || null,
                     })
                 );
             } else {
@@ -112,6 +115,7 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
                                 ? weekNumber
                                 : null,
                             year: formData.includeWeekInfo ? year : null,
+                            defaultText: formData.defaultText || null,
                         })
                         .link({
                             owner: user.id,

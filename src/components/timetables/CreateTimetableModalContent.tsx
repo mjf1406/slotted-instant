@@ -171,67 +171,69 @@ export function CreateTimetableModalContent({
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label
-                        htmlFor="color"
-                        className="text-sm font-medium leading-none"
-                    >
-                        Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            id="color"
-                            type="color"
-                            value={formData.color}
-                            onChange={(e) =>
-                                handleFieldChange("color", e.target.value)
-                            }
-                            className="h-10 w-20"
-                        />
-                        <Input
-                            type="text"
-                            value={formData.color}
-                            onChange={(e) =>
-                                handleFieldChange("color", e.target.value)
-                            }
-                            placeholder="#000000"
-                        />
-                    </div>
-                    {errors.color && (
-                        <p className="text-sm text-destructive">
-                            {errors.color}
-                        </p>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <label
-                        htmlFor="iconName"
-                        className="text-sm font-medium leading-none"
-                    >
-                        Icon
-                    </label>
-                    <IconPicker
-                        value={formData.iconName || undefined}
-                        onValueChange={(value) =>
-                            handleFieldChange("iconName", value)
-                        }
-                        triggerPlaceholder="Select an icon"
-                    >
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start"
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="color"
+                            className="text-sm font-medium leading-none"
                         >
-                            {formData.iconName ? (
-                                <>
-                                    <Icon name={formData.iconName} />
-                                    {formData.iconName}
-                                </>
-                            ) : (
-                                "Select an icon"
-                            )}
-                        </Button>
-                    </IconPicker>
+                            Color
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="color"
+                                type="color"
+                                value={formData.color}
+                                onChange={(e) =>
+                                    handleFieldChange("color", e.target.value)
+                                }
+                                className="h-10 w-20"
+                            />
+                            <Input
+                                type="text"
+                                value={formData.color}
+                                onChange={(e) =>
+                                    handleFieldChange("color", e.target.value)
+                                }
+                                placeholder="#000000"
+                            />
+                        </div>
+                        {errors.color && (
+                            <p className="text-sm text-destructive">
+                                {errors.color}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="iconName"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Icon
+                        </label>
+                        <IconPicker
+                            value={formData.iconName || undefined}
+                            onValueChange={(value) =>
+                                handleFieldChange("iconName", value)
+                            }
+                            triggerPlaceholder="Select an icon"
+                        >
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                {formData.iconName ? (
+                                    <>
+                                        <Icon name={formData.iconName} />
+                                        {formData.iconName}
+                                    </>
+                                ) : (
+                                    "Select an icon"
+                                )}
+                            </Button>
+                        </IconPicker>
+                    </div>
                 </div>
 
                 <DialogFooter>
