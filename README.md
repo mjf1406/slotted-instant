@@ -14,6 +14,7 @@ An app for teachers to plan their lessons in certain time slots.
 -   created display dialog with edit mode
 -   added bgColor and textColor to classes
 -   when sidebar is collapsed, the class icons render properly and clicking one opens the class action menu
+-   day view now renders classes within time slots correctly
 
 ### 2025/11/09 09:52
 

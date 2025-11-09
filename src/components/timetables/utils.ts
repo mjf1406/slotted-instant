@@ -149,13 +149,12 @@ export function formatWeekRange(weekStart: Date): string {
 }
 
 /**
- * Format date for day view (e.g., "Monday, January 1, 2024")
+ * Format date for day view (e.g., "Mon, Jan 15")
  */
 export function formatDayDate(date: Date): string {
     return date.toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
+        weekday: "short",
+        month: "short",
         day: "numeric",
     });
 }

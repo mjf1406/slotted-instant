@@ -38,7 +38,9 @@ export function TimetableNavigation({
     onGoToCurrent,
     onViewModeChange,
 }: TimetableNavigationProps) {
-    const handlePrevious = () => {
+    const handlePrevious = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (viewMode === "week") {
             onWeekChange(getPreviousWeek(currentWeekStart));
         } else {
@@ -46,7 +48,9 @@ export function TimetableNavigation({
         }
     };
 
-    const handleNext = () => {
+    const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (viewMode === "week") {
             onWeekChange(getNextWeek(currentWeekStart));
         } else {
@@ -62,15 +66,14 @@ export function TimetableNavigation({
     return (
         <div className="sticky top-16 z-40 grid grid-cols-3 items-center gap-4 mb-0 flex-wrap bg-background py-2 border-b rounded-lg group-has-data-[collapsible=icon]/sidebar-wrapper:top-12">
             <div></div>
-            <div className="flex items-center justify-center gap-2 shrink-0">
+            <div className="flex items-center justify-center gap-2 shrink-0 relative z-10">
                 <Button
+                    type="button"
                     variant="outline"
                     size="icon"
                     onClick={handlePrevious}
                     aria-label={
-                        viewMode === "week"
-                            ? "Previous week"
-                            : "Previous day"
+                        viewMode === "week" ? "Previous week" : "Previous day"
                     }
                 >
                     <ChevronLeft className="h-4 w-4" />
@@ -79,17 +82,16 @@ export function TimetableNavigation({
                     {dateDisplay}
                 </div>
                 <Button
+                    type="button"
                     variant="outline"
                     size="icon"
                     onClick={handleNext}
-                    aria-label={
-                        viewMode === "week" ? "Next week" : "Next day"
-                    }
+                    aria-label={viewMode === "week" ? "Next week" : "Next day"}
                 >
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
-            <div className="flex items-center justify-end gap-2 shrink-0">
+            <div className="flex items-center justify-end gap-2 shrink-0 relative z-0">
                 <Button
                     variant="outline"
                     size="icon"
