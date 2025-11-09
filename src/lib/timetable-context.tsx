@@ -51,18 +51,42 @@ function TimetableProviderContent({
 
     const timetables = (data?.timetables || []) as Timetable[];
 
-    // Set first timetable as selected when timetables load
+    // Sync selected timetable with query params
     useEffect(() => {
-        if (
-            !isLoading &&
+        if (typeof window === "undefined" || isLoading || !user?.id) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const timetableId = params.get("timetableId");
+
+        if (timetableId && timetables.length > 0) {
+            const timetable = timetables.find((t) => t.id === timetableId);
+            if (timetable && timetable.id !== selectedTimetable?.id) {
+                setSelectedTimetable(timetable);
+            }
+        } else if (
+            !timetableId &&
             timetables.length > 0 &&
             !selectedTimetable &&
-            !error &&
-            user?.id
+            !error
         ) {
+            // Set first timetable as selected when timetables load (if no query param)
             setSelectedTimetable(timetables[0]);
         }
     }, [isLoading, timetables, selectedTimetable, error, user?.id]);
+
+    // Update query params when selected timetable changes
+    useEffect(() => {
+        if (typeof window === "undefined" || !selectedTimetable) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const currentTimetableId = params.get("timetableId");
+
+        if (selectedTimetable.id !== currentTimetableId) {
+            params.set("timetableId", selectedTimetable.id);
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, "", newUrl);
+        }
+    }, [selectedTimetable]);
 
     return (
         <TimetableContext.Provider

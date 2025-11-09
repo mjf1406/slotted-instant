@@ -10,9 +10,9 @@ import {
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { NavUser } from "@/components/layout/nav-user";
-import { NavClasses } from "@/components/layout/nav-classes";
-import { TimetableSwitcher } from "@/components/layout/timetable-switcher";
+import { NavUser } from "@/components/_layout/nav-user";
+import { NavClasses } from "@/components/_layout/nav-classes";
+import { TimetableSwitcher } from "@/components/_layout/timetable-switcher";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (

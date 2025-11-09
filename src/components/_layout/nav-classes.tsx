@@ -6,7 +6,7 @@ import * as React from "react";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
 import type { Class } from "@/lib/types";
-import { CreateClassModal } from "@/components/CreateClassModal";
+import { CreateClassModal } from "@/components/classes";
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -75,29 +75,12 @@ function ClassItem({ classItem }: { classItem: Class }) {
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const { state } = useSidebar();
 
-    const handleDragStart = (e: React.DragEvent) => {
-        e.dataTransfer.setData(
-            "application/json",
-            JSON.stringify({
-                type: "class",
-                classId: classItem.id,
-                className: classItem.name,
-                color: classItem.color,
-                iconName: classItem.iconName,
-                iconPrefix: classItem.iconPrefix,
-            })
-        );
-        e.dataTransfer.effectAllowed = "move";
-    };
-
     return (
         <>
             <SidebarMenuItem>
                 <div className="flex items-center w-full group">
                     <SidebarMenuButton
-                        draggable
-                        onDragStart={handleDragStart}
-                        className="cursor-grab active:cursor-grabbing flex-1"
+                        className="flex-1"
                         tooltip={classItem.name}
                     >
                         {classItem.iconName ? (

@@ -7,7 +7,7 @@ import { ChevronsUpDown, Plus, CalendarIcon, Edit, Trash2 } from "lucide-react";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
-import { CreateTimetableModal } from "@/components/CreateTimetableModal";
+import { CreateTimetableModal } from "@/components/timetables";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -144,7 +144,9 @@ export function TimetableSwitcher() {
                         <div
                             className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
                             style={{
-                                backgroundColor: displayTimetable?.color || "var(--sidebar-primary)",
+                                backgroundColor:
+                                    displayTimetable?.color ||
+                                    "var(--sidebar-primary)",
                             }}
                         >
                             {displayTimetable?.iconName ? (
@@ -183,12 +185,17 @@ export function TimetableSwitcher() {
                                 <div
                                     className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
                                     style={{
-                                        backgroundColor: (displayTimetable as any)?.color || "var(--sidebar-primary)",
+                                        backgroundColor:
+                                            (displayTimetable as any)?.color ||
+                                            "var(--sidebar-primary)",
                                     }}
                                 >
                                     {(displayTimetable as any)?.iconName ? (
                                         <Icon
-                                            name={(displayTimetable as any).iconName as IconName}
+                                            name={
+                                                (displayTimetable as any)
+                                                    .iconName as IconName
+                                            }
                                             className="size-4"
                                         />
                                     ) : (
@@ -245,12 +252,18 @@ export function TimetableSwitcher() {
                                             <div
                                                 className="flex size-6 items-center justify-center rounded-md border"
                                                 style={{
-                                                    backgroundColor: (timetable as any).color || "transparent",
+                                                    backgroundColor:
+                                                        (timetable as any)
+                                                            .color ||
+                                                        "transparent",
                                                 }}
                                             >
                                                 {(timetable as any).iconName ? (
                                                     <Icon
-                                                        name={(timetable as any).iconName as IconName}
+                                                        name={
+                                                            (timetable as any)
+                                                                .iconName as IconName
+                                                        }
                                                         className="size-3.5 shrink-0"
                                                     />
                                                 ) : (

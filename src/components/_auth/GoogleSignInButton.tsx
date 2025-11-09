@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { signInWithGoogle } from "../../lib/auth";
+import { signInWithGoogle } from "@/lib/auth";
 
 // Fallback UUID generator for browsers that don't support crypto.randomUUID
 function generateUUID(): string {
@@ -34,4 +34,3 @@ export function GoogleSignInButton() {
         />
     );
 }
-

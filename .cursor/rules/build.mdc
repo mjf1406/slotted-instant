@@ -1,3 +1,10 @@
 ---
 alwaysApply: true
 ---
+
+<!-- @format -->
+
+IMPORTANT: run these as separate commands so you stay in the correct directory. Do not link them with && or ;; or whatever.
+
+1. cd "C:\Users\mfitz\Documents\GitHub Clones\mjf1406\slotted-instant"
+2. npm run build and fix errors until it builds
