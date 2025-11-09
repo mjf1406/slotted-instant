@@ -79,8 +79,7 @@ export function useCreateTimeSlot(
             setDisabledThisWeek(false);
         }
         setErrors({});
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, slot?.id, slot?.timetable?.id]);
+    }, [isOpen, slot, selectedTimetable]);
 
     // Set default timetable when dialog opens (only if form doesn't have one and not in edit mode)
     useEffect(() => {
@@ -96,7 +95,7 @@ export function useCreateTimeSlot(
                 return prev;
             });
         }
-    }, [isOpen, selectedTimetable?.id, isEditMode]);
+    }, [isOpen, selectedTimetable, isEditMode]);
 
     const handleDayToggle = (day: string) => {
         setFormData((prev) => {

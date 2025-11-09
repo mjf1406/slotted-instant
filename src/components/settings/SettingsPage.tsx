@@ -3,11 +3,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-    useSettings,
-    type WeekStartDay,
-    type TimeFormat,
-} from "@/lib/settings-context";
+import { useSettings } from "@/lib/settings-context";
+import type { WeekStartDay, TimeFormat } from "@/lib/settings-types";
 import { Button } from "@/components/ui/button";
 import {
     Select,

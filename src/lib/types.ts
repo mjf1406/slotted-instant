@@ -22,17 +22,17 @@ export interface Slot {
 export type User = InstaQLEntity<
     AppSchema,
     "users",
-    { instantUser: {} }
+    { instantUser: Record<string, never> }
 >;
 
 export type Timetable = InstaQLEntity<
     AppSchema,
     "timetables",
     {
-        owner: {};
-        classes: {};
-        slots: {};
-        slotClasses: {};
+        owner: Record<string, never>;
+        classes: Record<string, never>;
+        slots: Record<string, never>;
+        slotClasses: Record<string, never>;
     }
 >;
 
@@ -40,11 +40,11 @@ export type Class = InstaQLEntity<
     AppSchema,
     "classes",
     {
-        owner: {};
-        timetable: {};
-        linkedClass: {};
-        linkedClasses: {};
-        slotClasses: {};
+        owner: Record<string, never>;
+        timetable: Record<string, never>;
+        linkedClass: Record<string, never>;
+        linkedClasses: Record<string, never>;
+        slotClasses: Record<string, never>;
     }
 >;
 
@@ -52,10 +52,10 @@ export type SlotEntity = InstaQLEntity<
     AppSchema,
     "slots",
     {
-        owner: {};
-        timetable: {};
-        slotClasses: {};
-        disabledSlots: {};
+        owner: Record<string, never>;
+        timetable: Record<string, never>;
+        slotClasses: Record<string, never>;
+        disabledSlots: Record<string, never>;
     }
 >;
 
@@ -63,10 +63,10 @@ export type SlotClass = InstaQLEntity<
     AppSchema,
     "slotClasses",
     {
-        owner: {};
-        timetable: {};
-        slot: {};
-        class: {};
+        owner: Record<string, never>;
+        timetable: Record<string, never>;
+        slot: Record<string, never>;
+        class: Record<string, never>;
     }
 >;
 
@@ -74,8 +74,8 @@ export type DisabledSlot = InstaQLEntity<
     AppSchema,
     "disabledSlots",
     {
-        owner: {};
-        slot: {};
+        owner: Record<string, never>;
+        slot: Record<string, never>;
     }
 >;
 

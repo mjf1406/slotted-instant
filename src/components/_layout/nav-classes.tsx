@@ -337,7 +337,7 @@ function NavClassesContent() {
                         {classes.map((classItem) => (
                             <ClassItem
                                 key={classItem.id}
-                                classItem={classItem}
+                                classItem={classItem as unknown as Class}
                             />
                         ))}
                     </SidebarMenu>

@@ -392,7 +392,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         } else {
             try {
                 element = anchorNode.getTopLevelElementOrThrow();
-            } catch (error) {
+            } catch {
                 element = null;
             }
         }

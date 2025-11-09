@@ -265,7 +265,7 @@ const IconPicker = React.forwardRef<
                     }, 1);
                 }
             },
-            [open, onOpenChange, virtualizer]
+            [open, onOpenChange, virtualizer, setSearch]
         );
 
         const handleIconClick = useCallback(
@@ -274,7 +274,7 @@ const IconPicker = React.forwardRef<
                 setIsOpen(false);
                 setSearch("");
             },
-            [handleValueChange]
+            [handleValueChange, setSearch]
         );
 
         const handleSearchChange = useCallback(
@@ -287,7 +287,7 @@ const IconPicker = React.forwardRef<
 
                 virtualizer.scrollToOffset(0);
             },
-            [virtualizer]
+            [virtualizer, setSearch]
         );
 
         const scrollToCategory = useCallback(

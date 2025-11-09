@@ -17,7 +17,7 @@ import {
     getPreviousWeek,
     getNextDay,
     getPreviousDay,
-} from "./utils";
+} from "../utils";
 
 interface TimetableNavigationProps {
     viewMode: "week" | "day";
@@ -132,3 +132,4 @@ export function TimetableNavigation({
         </div>
     );
 }
+

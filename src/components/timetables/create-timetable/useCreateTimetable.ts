@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import type { IconName } from "@/components/ui/icon-picker";
 import type { FormData, FormErrors, TimetableInput } from "./types";
 import { validateForm } from "./validation";
-import { minutesToTime, timeToMinutes } from "./utils";
+import { minutesToTime, timeToMinutes } from "../utils";
 
 const DEFAULT_FORM_DATA: FormData = {
     name: "",

@@ -2,17 +2,10 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useState, useEffect, useRef, useMemo } from "react";
 import { db } from "./db";
 import type { Timetable } from "./types";
-
-type TimetableContextState = {
-    selectedTimetable: Timetable | null;
-    setSelectedTimetable: (timetable: Timetable | null) => void;
-    timetables: Timetable[];
-    isLoading: boolean;
-    error: Error | null;
-};
+import type { TimetableContextState } from "./timetable-types";
 
 const initialState: TimetableContextState = {
     selectedTimetable: null,
@@ -22,7 +15,7 @@ const initialState: TimetableContextState = {
     error: null,
 };
 
-const TimetableContext = createContext<TimetableContextState>(initialState);
+export const TimetableContext = createContext<TimetableContextState>(initialState);
 
 function TimetableProviderContent({
     children,
@@ -51,7 +44,9 @@ function TimetableProviderContent({
             : {}
     );
 
-    const timetables = (data?.timetables || []) as Timetable[];
+    const timetables = useMemo(() => {
+        return (data?.timetables || []) as Timetable[];
+    }, [data?.timetables]);
 
     // Sync selected timetable with query params
     // This effect should only run when query params change or timetables load
@@ -135,13 +130,5 @@ export function TimetableProvider({
     );
 }
 
-export function useTimetable() {
-    const context = useContext(TimetableContext);
-
-    if (context === undefined) {
-        throw new Error("useTimetable must be used within a TimetableProvider");
-    }
-
-    return context;
-}
+export { useTimetable } from "./use-timetable";
 

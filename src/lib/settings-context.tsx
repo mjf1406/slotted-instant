@@ -2,17 +2,10 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo } from "react";
+import React, { createContext, useEffect, useMemo } from "react";
 import { db } from "./db";
 import { id } from "@instantdb/react";
-
-type WeekStartDay = "sunday" | "monday";
-type TimeFormat = "12" | "24";
-
-type UserSettings = {
-    weekStartDay: WeekStartDay;
-    timeFormat: TimeFormat;
-};
+import type { WeekStartDay, TimeFormat, UserSettings } from "./settings-types";
 
 type SettingsContextState = {
     settings: UserSettings;
@@ -25,7 +18,7 @@ const defaultSettings: UserSettings = {
     timeFormat: "24",
 };
 
-const SettingsContext = createContext<SettingsContextState>({
+export const SettingsContext = createContext<SettingsContextState>({
     settings: defaultSettings,
     isLoading: false,
     updateSettings: async () => {},
@@ -137,15 +130,5 @@ export function SettingsProvider({
     );
 }
 
-export function useSettings() {
-    const context = useContext(SettingsContext);
-
-    if (context === undefined) {
-        throw new Error("useSettings must be used within a SettingsProvider");
-    }
-
-    return context;
-}
-
-export type { WeekStartDay, TimeFormat, UserSettings };
+export { useSettings } from "./use-settings";
 

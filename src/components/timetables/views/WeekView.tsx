@@ -16,7 +16,7 @@ import {
 import { useSettings } from "@/lib/settings-context";
 import { CreateTimeSlotDialogContent } from "@/components/timeslots/CreateTimeSlotDialogContent";
 import { TimeSlot } from "../slots/TimeSlot";
-import DisplayClassDetails from "../DisplayClassDetails";
+import { DisplayClassDetails } from "../class-details";
 
 interface WeekViewProps {
     timetableId: string;
@@ -67,7 +67,7 @@ export function WeekView({
         [timetable?.days]
     );
     const slots = useMemo(
-        () => (timetable?.slots || []) as SlotEntity[],
+        () => (timetable?.slots || []) as unknown as SlotEntity[],
         [timetable?.slots]
     );
     const classes = useMemo(
@@ -75,7 +75,7 @@ export function WeekView({
         [timetable?.classes]
     );
     const allSlotClasses = useMemo(
-        () => (timetable?.slotClasses || []) as SlotClass[],
+        () => (timetable?.slotClasses || []) as unknown as SlotClass[],
         [timetable?.slotClasses]
     );
 

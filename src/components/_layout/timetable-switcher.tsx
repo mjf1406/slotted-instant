@@ -117,8 +117,8 @@ export function TimetableSwitcher() {
             days: (timetable.days as string[]) || [],
             startTime: timetable.startTime,
             endTime: timetable.endTime,
-            color: (timetable as any).color,
-            iconName: (timetable as any).iconName,
+            color: (timetable.color as string | undefined),
+            iconName: (timetable.iconName as string | undefined),
         });
         setEditModalOpen(true);
     };
@@ -186,15 +186,14 @@ export function TimetableSwitcher() {
                                     className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
                                     style={{
                                         backgroundColor:
-                                            (displayTimetable as any)?.color ||
+                                            (displayTimetable?.color as string | undefined) ||
                                             "var(--sidebar-primary)",
                                     }}
                                 >
-                                    {(displayTimetable as any)?.iconName ? (
+                                    {(displayTimetable?.iconName as string | undefined) ? (
                                         <Icon
                                             name={
-                                                (displayTimetable as any)
-                                                    .iconName as IconName
+                                                displayTimetable.iconName as IconName
                                             }
                                             className="size-4"
                                         />
@@ -253,16 +252,14 @@ export function TimetableSwitcher() {
                                                 className="flex size-6 items-center justify-center rounded-md border"
                                                 style={{
                                                     backgroundColor:
-                                                        (timetable as any)
-                                                            .color ||
+                                                        (timetable.color as string | undefined) ||
                                                         "transparent",
                                                 }}
                                             >
-                                                {(timetable as any).iconName ? (
+                                                {(timetable.iconName as string | undefined) ? (
                                                     <Icon
                                                         name={
-                                                            (timetable as any)
-                                                                .iconName as IconName
+                                                            timetable.iconName as IconName
                                                         }
                                                         className="size-3.5 shrink-0"
                                                     />

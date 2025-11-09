@@ -1,7 +1,7 @@
 /** @format */
 
 import type { FormData, FormErrors } from "./types";
-import { timeToMinutes } from "./utils";
+import { timeToMinutes } from "../utils";
 
 export function validateForm(formData: FormData): FormErrors {
     const errors: FormErrors = {};

@@ -34,10 +34,11 @@ export function useCreateClass(isOpen: boolean, classItem?: Class | null) {
     // Initialize form data when class changes or modal opens
     useEffect(() => {
         if (isOpen && classItem) {
+            const bgColor = (classItem.bgColor as string | undefined) || "#000000";
             setFormData({
                 name: classItem.name,
-                bgColor: (classItem as any).bgColor || (classItem as any).color || "#000000",
-                textColor: (classItem as any).textColor || suggestTextColor((classItem as any).bgColor || (classItem as any).color || "#000000"),
+                bgColor,
+                textColor: (classItem.textColor as string | undefined) || suggestTextColor(bgColor),
                 iconName: (classItem.iconName as IconName) || "",
                 includeWeekInfo: !!(classItem.weekNumber && classItem.year),
                 defaultText: classItem.defaultText || "",

@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@/components/ui/icon-picker";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import type { Class } from "@/lib/types";
 
 interface AddClassDropdownProps {
@@ -54,7 +54,7 @@ export function AddClassDropdown({
                         >
                             {classItem.iconName ? (
                                 <Icon
-                                    name={classItem.iconName as any}
+                                    name={classItem.iconName as IconName}
                                     className="h-4 w-4 shrink-0"
                                     style={{ color: classItem.textColor || "#000000" }}
                                 />

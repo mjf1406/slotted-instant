@@ -11,7 +11,7 @@ import ResponsiveDialog from "@/components/ui/responsive-dialog";
 import { Loader2, Plus } from "lucide-react";
 import { IconPicker, Icon } from "@/components/ui/icon-picker";
 import { useCreateTimetable } from "./useCreateTimetable";
-import { WEEKDAYS } from "./utils";
+import { WEEKDAYS } from "../utils";
 import type { TimetableInput } from "./types";
 
 interface CreateTimetableModalContentProps {
