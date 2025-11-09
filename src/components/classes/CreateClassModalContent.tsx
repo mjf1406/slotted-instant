@@ -12,6 +12,7 @@ import { Loader2, Plus } from "lucide-react";
 import { IconPicker, Icon } from "@/components/ui/icon-picker";
 import { useCreateClass } from "./useCreateClass";
 import type { Class } from "@/lib/types";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface CreateClassModalContentProps {
     isOpen: boolean;
@@ -195,15 +196,15 @@ export function CreateClassModalContent({
                     >
                         Default Text
                     </label>
-                    <textarea
+                    <RichTextEditor
                         id="defaultText"
-                        className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Enter default text for this class..."
                         value={formData.defaultText}
-                        onChange={(e) =>
-                            handleFieldChange("defaultText", e.target.value)
+                        onChange={(nextValue) =>
+                            handleFieldChange("defaultText", nextValue)
                         }
-                        aria-invalid={!!errors.defaultText}
+                        placeholder="Enter default text for this class..."
+                        ariaInvalid={!!errors.defaultText}
+                        className="min-h-[200px]"
                     />
                     {errors.defaultText && (
                         <p className="text-sm text-destructive">

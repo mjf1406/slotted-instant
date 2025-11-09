@@ -18,6 +18,7 @@ import { Icon, type IconName } from "@/components/ui/icon-picker";
 import type { SlotClass } from "@/lib/types";
 import { sanitizeHtml } from "@/lib/html-utils";
 import parse, { type DOMNode, Text } from "html-react-parser";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface DisplayClassDetailsProps {
     slotClass: SlotClass | null;
@@ -159,10 +160,9 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
         if (!onSave || !slotClass) return;
         setIsSaving(true);
         try {
-            const trimmedText = editText.trim();
             const updatedSlotClass: SlotClass = {
                 ...slotClass,
-                text: trimmedText || undefined,
+                text: editText || undefined,
                 complete: isCompleted,
             };
             await onSave(updatedSlotClass);
@@ -251,13 +251,11 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                         <div className="p-6">
                             {isEditMode ? (
                                 <>
-                                    <textarea
-                                        className="w-full min-h-[400px] rounded-md border border-input bg-background px-4 py-3 text-2xl ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                                        placeholder="Enter text for this class..."
+                                    <RichTextEditor
                                         value={editText}
-                                        onChange={(e) =>
-                                            setEditText(e.target.value)
-                                        }
+                                        onChange={setEditText}
+                                        placeholder="Enter text for this class..."
+                                        className="min-h-[400px] px-4 py-3"
                                         autoFocus
                                     />
                                     <div className="mt-16 flex justify-end space-x-2">
