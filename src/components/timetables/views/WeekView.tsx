@@ -120,6 +120,14 @@ export function WeekView({
         return grouped;
     }, [slots, days]);
 
+    // Get the current displaying slotClass from reactive query data - must be called before early returns
+    const displayingSlotClass = useMemo(() => {
+        if (!displayingSlotClassId) return null;
+        return (
+            allSlotClasses.find((sc) => sc.id === displayingSlotClassId) || null
+        );
+    }, [displayingSlotClassId, allSlotClasses]);
+
     // Early returns after all hooks
     if (!timetableId) {
         return (
@@ -262,14 +270,6 @@ export function WeekView({
         setDisplayDialogOpen(false);
         setDisplayingSlotClassId(null);
     };
-
-    // Get the current displaying slotClass from reactive query data
-    const displayingSlotClass = useMemo(() => {
-        if (!displayingSlotClassId) return null;
-        return (
-            allSlotClasses.find((sc) => sc.id === displayingSlotClassId) || null
-        );
-    }, [displayingSlotClassId, allSlotClasses]);
 
     // Function to save slotClass (text and complete)
     const handleSaveSlotClass = async (updatedSlotClass: SlotClass) => {

@@ -4,7 +4,7 @@
 
 import { useMemo, useState } from "react";
 import { db } from "@/lib/db";
-import type { Timetable, SlotEntity, SlotClass } from "@/lib/types";
+import type { Timetable, SlotEntity, SlotClass, Class } from "@/lib/types";
 import {
     timeToMinutes,
     minutesToTime,
@@ -56,11 +56,21 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
     );
 
     const timetable = data?.timetables?.[0] as Timetable | undefined;
+    // Call db.useUser() to maintain consistent hook order with WeekView
+    // This prevents React error #300 when switching timetables
+    const _user = db.useUser();
+    void _user; // Intentionally unused - kept for hook consistency
 
     // Extract data with safe defaults
     const days = (timetable?.days as string[]) || [];
-    const slots = (timetable?.slots || []) as SlotEntity[];
-    const allSlotClasses = (timetable?.slotClasses || []) as SlotClass[];
+    const slots = useMemo(
+        () => (timetable?.slots || []) as SlotEntity[],
+        [timetable?.slots]
+    );
+    const allSlotClasses = useMemo(
+        () => (timetable?.slotClasses || []) as SlotClass[],
+        [timetable?.slotClasses]
+    );
 
     // Filter slotClasses by current week (get week start for currentDate)
     const weekStart = getWeekStart(currentDate, settings.weekStartDay);
@@ -313,33 +323,27 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                                                                             style={{
                                                                                 backgroundColor:
                                                                                     (
-                                                                                        slotClass.class as any
+                                                                                        slotClass.class as
+                                                                                            | Class
+                                                                                            | undefined
                                                                                     )
-                                                                                        ?.bgColor ||
-                                                                                    (
-                                                                                        slotClass.class as any
-                                                                                    )
-                                                                                        ?.color
+                                                                                        ?.bgColor
                                                                                         ? `${
                                                                                               (
-                                                                                                  slotClass.class as any
+                                                                                                  slotClass.class as
+                                                                                                      | Class
+                                                                                                      | undefined
                                                                                               )
-                                                                                                  ?.bgColor ||
-                                                                                              (
-                                                                                                  slotClass.class as any
-                                                                                              )
-                                                                                                  ?.color
+                                                                                                  ?.bgColor
                                                                                           }20`
                                                                                         : undefined,
                                                                                 borderColor:
                                                                                     (
-                                                                                        slotClass.class as any
+                                                                                        slotClass.class as
+                                                                                            | Class
+                                                                                            | undefined
                                                                                     )
                                                                                         ?.bgColor ||
-                                                                                    (
-                                                                                        slotClass.class as any
-                                                                                    )
-                                                                                        ?.color ||
                                                                                     undefined,
                                                                             }}
                                                                         >

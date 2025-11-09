@@ -3,7 +3,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Icon } from "@/components/ui/icon-picker";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import { SlotClassActionsMenu } from "./SlotClassActionsMenu";
 import type { SlotClass } from "@/lib/types";
 
@@ -29,8 +29,8 @@ export function SlotClassCard({
         onClick?.(slotClass);
     };
 
-    const bgColor = (slotClass.class as any)?.bgColor || (slotClass.class as any)?.color || "#6b7280";
-    const textColor = (slotClass.class as any)?.textColor || "#FFFFFF";
+    const bgColor = slotClass.class?.bgColor || "#6b7280";
+    const textColor = slotClass.class?.textColor || "#FFFFFF";
 
     return (
         <div
@@ -43,7 +43,7 @@ export function SlotClassCard({
         >
             {slotClass.class?.iconName && (
                 <Icon
-                    name={slotClass.class.iconName as any}
+                    name={slotClass.class.iconName as IconName}
                     className="h-4 w-4 shrink-0"
                 />
             )}

@@ -4,15 +4,12 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Edit } from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Icon } from "@/components/ui/icon-picker";
+import { Icon, type IconName } from "@/components/ui/icon-picker";
 import type { SlotClass } from "@/lib/types";
 import { sanitizeHtml } from "@/lib/html-utils";
 import parse, { type DOMNode, Text } from "html-react-parser";
@@ -46,13 +43,8 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     const [isCompleted, setIsCompleted] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    if (!slotClass || !slotClass.class) return null;
-
-    const classDetails = slotClass.class;
-
-    // Initialize edit text and complete status when entering edit mode or when slotClass changes
     useEffect(() => {
-        if (isEditMode) {
+        if (isEditMode && slotClass) {
             setEditText(slotClass.text || slotClass.class?.defaultText || "");
             setIsCompleted(slotClass.complete || false);
         }
@@ -75,6 +67,10 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
             setEditText("");
         }
     }, [isOpen]);
+
+    if (!slotClass || !slotClass.class) return null;
+
+    const classDetails = slotClass.class;
 
     const formatDate = (date: Date): string => {
         return date.toLocaleDateString("en-US", {
@@ -129,10 +125,15 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 
                 while ((match = hashtagRegex.exec(textContent)) !== null) {
                     if (match.index > lastIndex) {
-                        parts.push(textContent.substring(lastIndex, match.index));
+                        parts.push(
+                            textContent.substring(lastIndex, match.index)
+                        );
                     }
                     parts.push(
-                        <HashtagBadge key={match.index} tag={match[0].slice(1)} />
+                        <HashtagBadge
+                            key={match.index}
+                            tag={match[0].slice(1)}
+                        />
                     );
                     lastIndex = match.index + match[0].length;
                 }
@@ -175,24 +176,32 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent 
-                className="!fixed !inset-0 !w-screen !h-screen !max-w-none !translate-x-0 !translate-y-0 !top-0 !left-0 !right-0 !bottom-0 !rounded-none p-0 text-2xl [&>button]:hidden"
+        <Dialog
+            open={isOpen}
+            onOpenChange={onClose}
+        >
+            <DialogContent
+                className="fixed! inset-0! w-screen! h-screen! max-w-none! translate-x-0! translate-y-0! top-0! left-0! right-0! bottom-0! rounded-none! p-0 text-2xl [&>button]:hidden"
                 showCloseButton={false}
             >
                 <style>{contentStyle}</style>
                 <div className="flex h-full flex-col">
                     <div
                         className="flex items-center justify-between p-6"
-                        style={{ 
-                            backgroundColor: (classDetails as any).bgColor || (classDetails as any).color || "#6b7280",
-                            color: (classDetails as any).textColor || "#FFFFFF",
+                        style={{
+                            backgroundColor:
+                                (classDetails.bgColor as string | undefined) ||
+                                "#6b7280",
+                            color:
+                                (classDetails.textColor as
+                                    | string
+                                    | undefined) || "#FFFFFF",
                         }}
                     >
                         <h2 className="flex items-center text-4xl font-bold">
                             {classDetails.iconName && (
                                 <Icon
-                                    name={classDetails.iconName as any}
+                                    name={classDetails.iconName as IconName}
                                     className={`mr-3 text-4xl ${sizeClasses.icon}`}
                                 />
                             )}
@@ -211,15 +220,23 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                                     className="text-foreground"
                                     onClick={() => setIsEditMode(true)}
                                 >
-                                    <Edit className="mr-2" size={20} /> Edit
+                                    <Edit
+                                        className="mr-2 text-foreground"
+                                        size={20}
+                                    />{" "}
+                                    Edit
                                 </Button>
                             )}
-                            <Button variant="ghost" size="icon" onClick={onClose}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClose}
+                            >
                                 <X className="h-8 w-8" />
                             </Button>
                         </div>
                     </div>
-                    <ScrollArea className="flex-grow">
+                    <ScrollArea className="grow">
                         <div className="p-6">
                             {isEditMode ? (
                                 <>
@@ -227,7 +244,9 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                                         className="w-full min-h-[400px] rounded-md border border-input bg-background px-4 py-3 text-2xl ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                                         placeholder="Enter text for this class..."
                                         value={editText}
-                                        onChange={(e) => setEditText(e.target.value)}
+                                        onChange={(e) =>
+                                            setEditText(e.target.value)
+                                        }
                                         autoFocus
                                     />
                                     <div className="mt-16 flex justify-end space-x-2">
@@ -236,7 +255,9 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                                                 id="complete"
                                                 checked={isCompleted}
                                                 onCheckedChange={(checked) =>
-                                                    setIsCompleted(checked as boolean)
+                                                    setIsCompleted(
+                                                        checked as boolean
+                                                    )
                                                 }
                                             />
                                             <label
@@ -262,7 +283,9 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                                     </div>
                                 </>
                             ) : displayText ? (
-                                <div className="class-content">{processedText}</div>
+                                <div className="class-content">
+                                    {processedText}
+                                </div>
                             ) : (
                                 <div className="text-muted-foreground">
                                     No content available for this class.
@@ -277,4 +300,3 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 };
 
 export default DisplayClassDetails;
-
