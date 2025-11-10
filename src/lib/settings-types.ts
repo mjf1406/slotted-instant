@@ -4,5 +4,6 @@ export type TimeFormat = "12" | "24";
 export type UserSettings = {
     weekStartDay: WeekStartDay;
     timeFormat: TimeFormat;
+    showSlotDuration?: boolean;
 };
 

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useSettings } from "@/lib/settings-context";
 import type { WeekStartDay, TimeFormat } from "@/lib/settings-types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -26,6 +27,9 @@ export function SettingsPage() {
     const [timeFormat, setTimeFormat] = useState<TimeFormat>(
         settings.timeFormat
     );
+    const [showSlotDuration, setShowSlotDuration] = useState<boolean>(
+        settings.showSlotDuration ?? true
+    );
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -33,11 +37,13 @@ export function SettingsPage() {
     useEffect(() => {
         setWeekStartDay(settings.weekStartDay);
         setTimeFormat(settings.timeFormat);
+        setShowSlotDuration(settings.showSlotDuration ?? true);
     }, [settings]);
 
     const hasChanges =
         weekStartDay !== settings.weekStartDay ||
-        timeFormat !== settings.timeFormat;
+        timeFormat !== settings.timeFormat ||
+        showSlotDuration !== (settings.showSlotDuration ?? true);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -46,6 +52,7 @@ export function SettingsPage() {
             await updateSettings({
                 weekStartDay,
                 timeFormat,
+                showSlotDuration,
             });
             setSaveMessage("Settings saved successfully!");
             setTimeout(() => setSaveMessage(null), 3000);
@@ -60,6 +67,7 @@ export function SettingsPage() {
     const handleReset = () => {
         setWeekStartDay(settings.weekStartDay);
         setTimeFormat(settings.timeFormat);
+        setShowSlotDuration(settings.showSlotDuration ?? true);
         setSaveMessage(null);
     };
 
@@ -149,6 +157,40 @@ export function SettingsPage() {
                             </SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                    <div>
+                        <h3 className="text-lg font-semibold">
+                            Display Options
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                            Customize what information is shown in the timetable
+                        </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="showSlotDuration"
+                            checked={showSlotDuration}
+                            onCheckedChange={(checked) =>
+                                setShowSlotDuration(!!checked)
+                            }
+                        />
+                        <div className="space-y-1 leading-none">
+                            <label
+                                htmlFor="showSlotDuration"
+                                className="text-sm font-medium cursor-pointer"
+                            >
+                                Show time slot duration
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                                Display the duration (e.g., "1h 30m") next to
+                                the time in each slot header
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <Separator />

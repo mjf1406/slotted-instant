@@ -79,6 +79,7 @@ const _schema = i.schema({
         userSettings: i.entity({
             weekStartDay: i.string().indexed(), // "sunday" | "monday"
             timeFormat: i.string().indexed(), // "12" | "24"
+            showSlotDuration: i.boolean().indexed().optional(),
         }),
     },
     links: {

@@ -42,8 +42,7 @@ export function CreateClassModal({
     classItem,
 }: CreateClassModalProps = {}) {
     const [internalOpen, setInternalOpen] = useState(false);
-    const isOpen =
-        controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
     const setIsOpen =
         controlledOnOpenChange !== undefined
             ? controlledOnOpenChange
@@ -53,12 +52,13 @@ export function CreateClassModal({
     const defaultTrigger = (
         <Button variant="outline">
             <Plus className="h-4 w-4" />
-            Create Class
+            Class
         </Button>
     );
 
     // Only use default trigger if not controlled and no trigger provided
-    const finalTrigger = trigger || (!isControlled ? defaultTrigger : undefined);
+    const finalTrigger =
+        trigger || (!isControlled ? defaultTrigger : undefined);
 
     return (
         <CreateClassModalContentWrapper
@@ -70,4 +70,3 @@ export function CreateClassModal({
         />
     );
 }
-

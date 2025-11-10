@@ -24,7 +24,7 @@ export function CreateTimeSlotDialog({
     const defaultTrigger = (
         <Button variant="default">
             <Plus className="h-4 w-4" />
-            Create Time Slot
+            Time Slot
         </Button>
     );
 

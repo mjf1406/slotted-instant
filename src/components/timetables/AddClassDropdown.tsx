@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,6 +23,9 @@ export function AddClassDropdown({
     onAddClass,
     showOnHover = false,
 }: AddClassDropdownProps) {
+    const [hoveredClassId, setHoveredClassId] = useState<string | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
+
     if (availableClasses.length === 0) {
         return null;
     }
@@ -32,7 +36,7 @@ export function AddClassDropdown({
 
     return (
         <div className={buttonClassName}>
-            <DropdownMenu>
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
@@ -46,11 +50,15 @@ export function AddClassDropdown({
                         <DropdownMenuItem
                             key={classItem.id}
                             onClick={() => onAddClass(classItem.id)}
+                            onMouseEnter={() => setHoveredClassId(classItem.id)}
+                            onMouseLeave={() => setHoveredClassId(null)}
                             style={{
                                 backgroundColor: classItem.bgColor || "#ffffff",
                                 color: classItem.textColor || "#000000",
                             }}
-                            className="gap-2"
+                            className={`gap-2 transition-opacity ${
+                                hoveredClassId === classItem.id ? "opacity-100" : "opacity-50"
+                            }`}
                         >
                             {classItem.iconName ? (
                                 <Icon

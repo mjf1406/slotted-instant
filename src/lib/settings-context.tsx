@@ -16,6 +16,7 @@ type SettingsContextState = {
 const defaultSettings: UserSettings = {
     weekStartDay: "monday",
     timeFormat: "24",
+    showSlotDuration: true,
 };
 
 export const SettingsContext = createContext<SettingsContextState>({
@@ -53,6 +54,7 @@ function SettingsProviderContent({
         return {
             weekStartDay: (settingsData.weekStartDay as WeekStartDay) || "monday",
             timeFormat: (settingsData.timeFormat as TimeFormat) || "24",
+            showSlotDuration: settingsData.showSlotDuration !== undefined ? settingsData.showSlotDuration : true,
         };
     }, [settingsData]);
 
@@ -79,6 +81,7 @@ function SettingsProviderContent({
                 db.tx.userSettings[settingsData.id].update({
                     weekStartDay: newSettings.weekStartDay,
                     timeFormat: newSettings.timeFormat,
+                    showSlotDuration: newSettings.showSlotDuration ?? true,
                 })
             );
         } else {
@@ -87,6 +90,7 @@ function SettingsProviderContent({
                 db.tx.userSettings[id()].update({
                     weekStartDay: newSettings.weekStartDay,
                     timeFormat: newSettings.timeFormat,
+                    showSlotDuration: newSettings.showSlotDuration ?? true,
                 }).link({ owner: user.id })
             );
         }

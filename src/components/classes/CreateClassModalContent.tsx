@@ -13,6 +13,7 @@ import { IconPicker, Icon } from "@/components/ui/icon-picker";
 import { useCreateClass } from "./useCreateClass";
 import type { Class } from "@/lib/types";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateClassModalContentProps {
     isOpen: boolean;
@@ -67,7 +68,9 @@ export function CreateClassModalContent({
             }
             contentClassName="sm:max-w-[600px]"
         >
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="flex flex-col">
+            <ScrollArea className="max-h-[60vh] pr-4">
+                <div className="space-y-6">
                 <div className="space-y-2">
                     <label
                         htmlFor="name"
@@ -236,8 +239,9 @@ export function CreateClassModalContent({
                         </div>
                     </div>
                 </div>
-
-                <DialogFooter>
+                </div>
+            </ScrollArea>
+                <DialogFooter className="mt-4">
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? (
                             <>

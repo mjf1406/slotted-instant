@@ -5,8 +5,12 @@
 import * as React from "react";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
+import { useSettings } from "@/lib/settings-context";
 import type { Class } from "@/lib/types";
+import type { InstaQLEntity } from "@instantdb/react";
+import type { AppSchema } from "@/instant.schema";
 import { CreateClassModal } from "@/components/classes";
+import { getYearAndWeekNumber, getWeekStart } from "@/components/timetables/utils";
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -73,7 +77,7 @@ function DeleteClassDialog({
     );
 }
 
-function ClassItem({ classItem }: { classItem: Class }) {
+function ClassItem({ classItem, isInCurrentView }: { classItem: Class; isInCurrentView?: boolean }) {
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -84,7 +88,9 @@ function ClassItem({ classItem }: { classItem: Class }) {
         <>
             <SidebarMenuItem>
                 <div
-                    className="flex items-center w-full group rounded-md"
+                    className={`flex items-center w-full group rounded-md ${
+                        isInCurrentView ? "opacity-50" : ""
+                    }`}
                     style={{
                         backgroundColor: classItem.bgColor || "#ffffff",
                         color: classItem.textColor || "#000000",
@@ -156,7 +162,7 @@ function ClassItem({ classItem }: { classItem: Class }) {
                                 </DropdownMenuTrigger>
                             </>
                         )}
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align={isCollapsed ? "start" : "end"} side={isCollapsed ? "right" : "bottom"}>
                             {isCollapsed && (
                                 <>
                                     <DropdownMenuLabel
@@ -234,11 +240,37 @@ function ClassItem({ classItem }: { classItem: Class }) {
     );
 }
 
+// Types for query results
+type ClassesQueryResult = InstaQLEntity<
+    AppSchema,
+    "classes",
+    {
+        owner: Record<string, never>;
+        timetable: Record<string, never>;
+        linkedClass: Record<string, never>;
+        linkedClasses: Record<string, never>;
+    }
+>;
+
+type SlotClassesQueryResult = InstaQLEntity<
+    AppSchema,
+    "slotClasses",
+    {
+        class: Record<string, never>;
+    }
+>;
+
 function NavClassesContent() {
     const user = db.useUser();
     const { selectedTimetable } = useTimetable();
+    const { settings } = useSettings();
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
     const { state } = useSidebar();
+
+    // Get current week for filtering slotClasses
+    const currentDate = new Date();
+    const weekStart = getWeekStart(currentDate, settings.weekStartDay);
+    const { year, weekNumber } = getYearAndWeekNumber(weekStart);
 
     const { data, isLoading } = db.useQuery(
         user?.id && selectedTimetable
@@ -248,19 +280,43 @@ function NavClassesContent() {
                           where: {
                               "owner.id": user.id,
                               "timetable.id": selectedTimetable.id,
-                          },
+                          } as Record<string, unknown>,
                       },
                       owner: {},
                       timetable: {},
                       linkedClass: {},
                       linkedClasses: {},
-                      slotClasses: {},
+                  },
+                  slotClasses: {
+                      $: {
+                          where: {
+                              "timetable.id": selectedTimetable.id,
+                              year: year,
+                              weekNumber: weekNumber,
+                              hidden: { $ne: true },
+                          } as Record<string, unknown>,
+                      },
+                      class: {},
                   },
               }
             : {}
     );
 
-    const classes = data?.classes || [];
+    const classes = React.useMemo(
+        () => (data?.classes || []) as ClassesQueryResult[],
+        [data?.classes]
+    );
+
+    // Get class IDs that are in the current view
+    const classesInCurrentView = React.useMemo(() => {
+        const slotClasses = (data?.slotClasses || []) as SlotClassesQueryResult[];
+        const classIds = new Set(
+            slotClasses
+                .map((sc) => sc.class?.id)
+                .filter(Boolean) as string[]
+        );
+        return classIds;
+    }, [data?.slotClasses]);
 
     if (isLoading) {
         return (
@@ -337,7 +393,8 @@ function NavClassesContent() {
                         {classes.map((classItem) => (
                             <ClassItem
                                 key={classItem.id}
-                                classItem={classItem as unknown as Class}
+                                classItem={classItem as Class}
+                                isInCurrentView={classesInCurrentView.has(classItem.id)}
                             />
                         ))}
                     </SidebarMenu>

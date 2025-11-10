@@ -2,7 +2,7 @@
 
 "use client";
 
-import { formatTimeString } from "../utils";
+import { formatTimeString, timeToMinutes } from "../utils";
 import { useSettings } from "@/lib/settings-context";
 import type { SlotEntity, SlotClass, Class } from "@/lib/types";
 import { SlotClassCard } from "./SlotClassCard";
@@ -38,6 +38,16 @@ export function TimeSlot({
     const { settings } = useSettings();
     const hasClass = classesInSlot.length > 0;
     const hasAvailableClasses = availableClasses.length > 0;
+    
+    // Calculate duration in minutes
+    const startMinutes = timeToMinutes(slot.startTime);
+    const endMinutes = timeToMinutes(slot.endTime);
+    const durationMinutes = endMinutes - startMinutes;
+    const durationHours = Math.floor(durationMinutes / 60);
+    const durationMins = durationMinutes % 60;
+    const durationText = durationHours > 0 
+        ? `${durationHours}h${durationMins > 0 ? ` ${durationMins}m` : ''}`
+        : `${durationMins}m`;
 
     return (
         <div
@@ -62,6 +72,7 @@ export function TimeSlot({
                             slot.endTime,
                             settings.timeFormat as "12" | "24"
                         )}
+                        {settings.showSlotDuration && ` (${durationText})`}
                     </div>
                     {hasClass ? (
                         <div className="space-y-1.5">

@@ -8,6 +8,17 @@ An app for teachers to plan their lessons in certain time slots.
 
 ## Change Log
 
+### 2025/11/10
+
+-   UX: moved the check mark when a class is complete to the left of the class name
+-   UX: when the add a class dropdown is open, only the hovered class has opacity-100, the others now have opacity-50 or so
+-   UX: in the sidebar, when it's collapsed, the dropdown menu for the classes now is positioned on the right
+-   BUG: the action menu now properly appears on hover
+-   BUG: the create class dialog now has a scroll area
+-   UX: added time slot duration in parentheses next to the time in the time slot header which can be enabled or disabled in settings
+-   UX: removed "Create" from the buttons in the navbar
+-   UX: in the sidebar, when a class has been added to a timeslot in the current view, it now has opacity-50
+
 ### 2025/11/09 12:48
 
 -   added checkmark on completed classes

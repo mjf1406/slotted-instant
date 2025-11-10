@@ -47,12 +47,12 @@ export function SlotClassCard({
                     className="h-4 w-4 shrink-0"
                 />
             )}
-            <span className="font-medium truncate flex-1">
-                {slotClass.class?.name || "Unnamed"}
-            </span>
             {slotClass.complete && (
                 <Check className="h-4 w-4 shrink-0" />
             )}
+            <span className="font-medium truncate flex-1">
+                {slotClass.class?.name || "Unnamed"}
+            </span>
             <SlotClassActionsMenu
                 slotClass={slotClass}
                 onDelete={onDelete}
