@@ -18,6 +18,7 @@ An app for teachers to plan their lessons in certain time slots.
 -   UX: in the sidebar, when a class has been added to a timeslot in the current view, it now has opacity-30 or some other way to indicate it's already in the current view
 -   UI: in the display mode, replaced the emoji with the checkmark icon if done
 -   UX: added keyboard shortcuts in the display dialog: edit mode, save, mark/unmark complete
+-   UX: when creating a timetable, can now optionally copy classes from another timetable
 
 ### 2025/11/10
 

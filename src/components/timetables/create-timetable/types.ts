@@ -32,6 +32,7 @@ export interface FormData {
     endTime: string;
     color: string;
     iconName: IconName | "";
+    sourceTimetableId: string | "";
 }
 
 export interface TimetableInput {

@@ -1,12 +1,13 @@
 /** @format */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { id } from "@instantdb/react";
 import { db } from "@/lib/db";
 import type { IconName } from "@/components/ui/icon-picker";
 import type { FormData, FormErrors, TimetableInput } from "./types";
 import { validateForm } from "./validation";
 import { minutesToTime, timeToMinutes } from "../utils";
+import type { Timetable, Class } from "@/lib/types";
 
 const DEFAULT_FORM_DATA: FormData = {
     name: "",
@@ -15,6 +16,7 @@ const DEFAULT_FORM_DATA: FormData = {
     endTime: "17:00",
     color: "#000000",
     iconName: "",
+    sourceTimetableId: "",
 };
 
 export function useCreateTimetable(
@@ -27,6 +29,25 @@ export function useCreateTimetable(
     const user = db.useUser();
     const isEditMode = !!timetable;
 
+    // Query all timetables for the dropdown (only when creating, not editing)
+    const { data: timetablesData } = db.useQuery(
+        user?.id && !isEditMode
+            ? {
+                  timetables: {
+                      $: {
+                          where: { "owner.id": user.id },
+                      },
+                      owner: {},
+                      classes: {},
+                  },
+              }
+            : {}
+    );
+
+    const availableTimetables = useMemo(() => {
+        return (timetablesData?.timetables || []) as Timetable[];
+    }, [timetablesData?.timetables]);
+
     // Initialize form data when timetable changes or modal opens
     useEffect(() => {
         if (isOpen && timetable) {
@@ -37,6 +58,7 @@ export function useCreateTimetable(
                 endTime: minutesToTime(timetable.endTime),
                 color: timetable.color || "#000000",
                 iconName: (timetable.iconName as IconName) || "",
+                sourceTimetableId: "",
             });
         } else if (isOpen && !timetable) {
             setFormData(DEFAULT_FORM_DATA);
@@ -128,6 +150,41 @@ export function useCreateTimetable(
                         })
                         .link({ owner: user.id })
                 );
+
+                // Copy classes from source timetable if one is selected
+                if (formData.sourceTimetableId) {
+                    const sourceTimetable = availableTimetables.find(
+                        (t) => t.id === formData.sourceTimetableId
+                    );
+                    if (sourceTimetable?.classes) {
+                        const classesToCopy = sourceTimetable.classes as unknown as Class[];
+
+                        // Create copies of all classes and link them to the new timetable
+                        for (const classToCopy of classesToCopy) {
+                            const newClassId = id();
+                            await db.transact(
+                                db.tx.classes[newClassId]
+                                    .update({
+                                        name: classToCopy.name,
+                                        defaultDay: classToCopy.defaultDay,
+                                        defaultStart: classToCopy.defaultStart,
+                                        defaultEnd: classToCopy.defaultEnd,
+                                        day: classToCopy.day,
+                                        start: classToCopy.start,
+                                        end: classToCopy.end,
+                                        bgColor: classToCopy.bgColor,
+                                        textColor: classToCopy.textColor,
+                                        iconName: classToCopy.iconName,
+                                        iconPrefix: classToCopy.iconPrefix,
+                                        weekNumber: classToCopy.weekNumber,
+                                        year: classToCopy.year,
+                                        defaultText: classToCopy.defaultText,
+                                    })
+                                    .link({ owner: user.id, timetable: timetableId })
+                            );
+                        }
+                    }
+                }
             }
 
             // Reset form
@@ -153,6 +210,7 @@ export function useCreateTimetable(
         errors,
         isLoading,
         isEditMode,
+        availableTimetables,
         handleFieldChange,
         handleDayToggle,
         handleSubmit,

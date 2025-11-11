@@ -206,25 +206,29 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
     };
 
     // Check if a slot is disabled (always or for current week)
+    // Priority: disabledSlots for current week > disabled field
     const isSlotDisabled = (slot: SlotEntity): boolean => {
-        // Check if always disabled
-        if (slot.disabled === true) {
-            return true;
-        }
-
-        // Check if disabled for current week
-        if (!slot.disabledSlots || slot.disabledSlots.length === 0) {
-            return false;
-        }
-
         const weekStart = getWeekStart(currentDate, settings.weekStartDay);
         const nextWeekStart = new Date(weekStart);
         nextWeekStart.setDate(nextWeekStart.getDate() + 7);
 
-        return slot.disabledSlots.some((disabledSlot) => {
-            const disableDate = new Date(disabledSlot.disableDate);
-            return disableDate >= weekStart && disableDate < nextWeekStart;
-        });
+        // First check if disabled for current week (disabledSlots takes priority)
+        if (slot.disabledSlots && slot.disabledSlots.length > 0) {
+            const isDisabledForWeek = slot.disabledSlots.some((disabledSlot) => {
+                const disableDate = new Date(disabledSlot.disableDate);
+                return disableDate >= weekStart && disableDate < nextWeekStart;
+            });
+            if (isDisabledForWeek) {
+                return true;
+            }
+        }
+
+        // Then check if always disabled
+        if (slot.disabled === true) {
+            return true;
+        }
+
+        return false;
     };
 
     const handleEditSlot = (slot: SlotEntity) => {

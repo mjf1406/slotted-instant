@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogFooter } from "@/components/ui/dialog";
 import ResponsiveDialog from "@/components/ui/responsive-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Plus } from "lucide-react";
 import { IconPicker, Icon } from "@/components/ui/icon-picker";
 import { useCreateTimetable } from "./useCreateTimetable";
@@ -34,6 +41,7 @@ export function CreateTimetableModalContent({
         errors,
         isLoading,
         isEditMode,
+        availableTimetables,
         handleFieldChange,
         handleDayToggle,
         handleSubmit,
@@ -87,6 +95,45 @@ export function CreateTimetableModalContent({
                         </p>
                     )}
                 </div>
+
+                {!isEditMode && (
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="sourceTimetable"
+                            className="text-sm font-medium leading-none"
+                        >
+                            Copy Classes From
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                            Optionally copy all classes from an existing
+                            timetable.
+                        </p>
+                        <Select
+                            value={formData.sourceTimetableId || "none"}
+                            onValueChange={(value) =>
+                                handleFieldChange(
+                                    "sourceTimetableId",
+                                    value === "none" ? "" : value
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a time table" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Select a time table</SelectItem>
+                                {availableTimetables.map((timetable) => (
+                                    <SelectItem
+                                        key={timetable.id}
+                                        value={timetable.id}
+                                    >
+                                        {timetable.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
 
                 <div className="space-y-2">
                     <label className="text-sm font-medium leading-none">

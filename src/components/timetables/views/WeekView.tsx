@@ -197,26 +197,30 @@ export function WeekView({
     };
 
     // Check if a slot is disabled (always or for current week)
+    // Priority: disabledSlots for current week > disabled field
     const isSlotDisabled = (slot: SlotEntity): boolean => {
-        // Check if always disabled
+        const nextWeekMonday = new Date(currentWeekStart);
+        nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
+
+        // First check if disabled for current week (disabledSlots takes priority)
+        if (slot.disabledSlots && slot.disabledSlots.length > 0) {
+            const isDisabledForWeek = slot.disabledSlots.some((disabledSlot) => {
+                const disableDate = new Date(disabledSlot.disableDate);
+                return (
+                    disableDate >= currentWeekStart && disableDate < nextWeekMonday
+                );
+            });
+            if (isDisabledForWeek) {
+                return true;
+            }
+        }
+
+        // Then check if always disabled
         if (slot.disabled === true) {
             return true;
         }
 
-        // Check if disabled for current week
-        if (!slot.disabledSlots || slot.disabledSlots.length === 0) {
-            return false;
-        }
-
-        const nextWeekMonday = new Date(currentWeekStart);
-        nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
-
-        return slot.disabledSlots.some((disabledSlot) => {
-            const disableDate = new Date(disabledSlot.disableDate);
-            return (
-                disableDate >= currentWeekStart && disableDate < nextWeekMonday
-            );
-        });
+        return false;
     };
 
     const handleEditSlot = (slot: SlotEntity) => {
