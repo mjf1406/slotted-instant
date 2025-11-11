@@ -16,6 +16,8 @@ import { useSettings } from "@/lib/settings-context";
 import { CreateTimeSlotDialogContent } from "@/components/timeslots/CreateTimeSlotDialogContent";
 import { TimeSlot } from "../slots/TimeSlot";
 import { DisplayClassDetails } from "../class-details";
+import { Button } from "@/components/ui/button";
+import { SquareX, SquareCheck } from "lucide-react";
 
 interface DayViewProps {
     timetableId: string;
@@ -239,6 +241,12 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
     const handleAddClassToSlot = async (slotId: string, classId: string) => {
         if (!timetable || !user) return;
 
+        // Check if this class already exists in the current view for any slot
+        const existingSlotClass = slotClasses.find(
+            (sc) => sc.class?.id === classId && sc.year === year && sc.weekNumber === weekNumber && !sc.hidden
+        );
+        const textToCopy = existingSlotClass?.text || null;
+
         const slotClassId = id();
         await db.transact(
             db.tx.slotClasses[slotClassId]
@@ -248,6 +256,7 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                     size: "whole",
                     complete: false,
                     hidden: false,
+                    text: textToCopy || undefined,
                 })
                 .link({
                     owner: user.id,
@@ -264,6 +273,91 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
             await db.transact(db.tx.slotClasses[slotClassId].delete());
         } catch (error) {
             console.error("Failed to delete slot class:", error);
+        }
+    };
+
+    // Function to delete slot
+    const handleDeleteSlot = async (slot: SlotEntity) => {
+        try {
+            await db.transact(db.tx.slots[slot.id].delete());
+        } catch (error) {
+            console.error("Failed to delete slot:", error);
+        }
+    };
+
+    // Check if all slots for the current day are disabled for the current week
+    const areAllSlotsDisabledForDay = (): boolean => {
+        if (daySlots.length === 0) return false;
+
+        const weekStart = getWeekStart(currentDate, settings.weekStartDay);
+        const nextWeekStart = new Date(weekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+        return daySlots.every((slot) => {
+            // Check if always disabled
+            if (slot.disabled === true) {
+                return true;
+            }
+
+            // Check if disabled for current week
+            if (!slot.disabledSlots || slot.disabledSlots.length === 0) {
+                return false;
+            }
+
+            return slot.disabledSlots.some((disabledSlot) => {
+                const disableDate = new Date(disabledSlot.disableDate);
+                return disableDate >= weekStart && disableDate < nextWeekStart;
+            });
+        });
+    };
+
+    // Function to toggle disable/enable all slots for the current day
+    const handleToggleDaySlots = async () => {
+        if (!timetable || !user) return;
+
+        const weekStart = getWeekStart(currentDate, settings.weekStartDay);
+        const allDisabled = areAllSlotsDisabledForDay();
+
+        if (allDisabled) {
+            // Enable all slots by removing disabledSlots entries for this week
+            for (const slot of daySlots) {
+                if (slot.disabledSlots) {
+                    const disabledSlotsToRemove = slot.disabledSlots.filter((disabledSlot) => {
+                        const disableDate = new Date(disabledSlot.disableDate);
+                        return disableDate.getTime() === weekStart.getTime();
+                    });
+
+                    for (const disabledSlot of disabledSlotsToRemove) {
+                        await db.transact(db.tx.disabledSlots[disabledSlot.id].delete());
+                    }
+                }
+            }
+        } else {
+            // Disable all slots for this day in the current week
+            for (const slot of daySlots) {
+                // Skip if always disabled
+                if (slot.disabled === true) continue;
+
+                // Check if already disabled for this week
+                const existingDisabledSlot = slot.disabledSlots?.find((disabledSlot) => {
+                    const disableDate = new Date(disabledSlot.disableDate);
+                    return disableDate.getTime() === weekStart.getTime();
+                });
+
+                if (!existingDisabledSlot) {
+                    const disabledSlotId = id();
+                    await db.transact(
+                        db.tx.disabledSlots[disabledSlotId]
+                            .update({
+                                disableDate: weekStart,
+                            })
+                            .link({
+                                owner: user.id,
+                                slot: slot.id,
+                            })
+                    );
+                }
+            }
         }
     };
 
@@ -310,8 +404,33 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                     }}
                 >
                     <div className="border-r p-2 text-sm font-medium">Time</div>
-                    <div className="border-r p-2 text-center text-sm font-medium">
-                        {formattedDate}
+                    <div className="border-r p-2 text-center text-sm font-medium flex items-center justify-between">
+                        <span className="flex-1 text-center">{formattedDate}</span>
+                        {daySlots.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleToggleDaySlots}
+                                className="h-7 px-2 text-xs shrink-0"
+                                title={
+                                    areAllSlotsDisabledForDay()
+                                        ? "Enable all slots for this day"
+                                        : "Disable all slots for this day"
+                                }
+                            >
+                                {areAllSlotsDisabledForDay() ? (
+                                    <>
+                                        <SquareCheck className="h-3 w-3 mr-1" />
+                                        Enable Day
+                                    </>
+                                ) : (
+                                    <>
+                                        <SquareX className="h-3 w-3 mr-1" />
+                                        Disable Day
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -369,6 +488,7 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                                         availableClasses={availableClasses}
                                         isDisabled={isDisabled}
                                         onEditSlot={handleEditSlot}
+                                        onDeleteSlot={handleDeleteSlot}
                                         onDeleteSlotClass={
                                             handleDeleteSlotClass
                                         }

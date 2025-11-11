@@ -18,6 +18,7 @@ interface TimeSlotProps {
     >[];
     isDisabled: boolean;
     onEditSlot: (slot: SlotEntity) => void;
+    onDeleteSlot?: (slot: SlotEntity) => void;
     onDeleteSlotClass: (slotClassId: string) => void;
     onAddClassToSlot: (classId: string) => void;
     onSlotClassClick?: (slotClass: SlotClass) => void;
@@ -30,6 +31,7 @@ export function TimeSlot({
     availableClasses,
     isDisabled,
     onEditSlot,
+    onDeleteSlot,
     onDeleteSlotClass,
     onAddClassToSlot,
     onSlotClassClick,
@@ -103,12 +105,11 @@ export function TimeSlot({
                         )
                     )}
                 </div>
-                {hasClass && (
-                    <SlotActionMenu
-                        slot={slot}
-                        onEdit={onEditSlot}
-                    />
-                )}
+                <SlotActionMenu
+                    slot={slot}
+                    onEdit={onEditSlot}
+                    onDelete={onDeleteSlot}
+                />
             </div>
         </div>
     );

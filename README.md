@@ -8,6 +8,17 @@ An app for teachers to plan their lessons in certain time slots.
 
 ## Change Log
 
+### 2025/11/11
+
+-   BUG: time slot action menu now correctly appears even when there are no classes in the slot
+-   UX: the time slot action menu now has a delete button
+-   UX: at the day area, there is an option to quickly disable an entire day's slots, for instance because the day might be off or something like that
+-   UX: when adding the same class to a time slot in the current view, it should copy the text from the one that is already in the view
+-   UX: in the side bar, the class action menu no longer has a white background on hover, instead it has the same bg on hover as the one that is present when inside a time slot
+-   UX: in the sidebar, when a class has been added to a timeslot in the current view, it now has opacity-30 or some other way to indicate it's already in the current view
+-   UI: in the display mode, replaced the emoji with the checkmark icon if done
+-   UX: added keyboard shortcuts in the display dialog: edit mode, save, mark/unmark complete
+
 ### 2025/11/10
 
 -   UX: moved the check mark when a class is complete to the left of the class name

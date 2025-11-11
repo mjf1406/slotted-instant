@@ -17,6 +17,8 @@ import { useSettings } from "@/lib/settings-context";
 import { CreateTimeSlotDialogContent } from "@/components/timeslots/CreateTimeSlotDialogContent";
 import { TimeSlot } from "../slots/TimeSlot";
 import { DisplayClassDetails } from "../class-details";
+import { Button } from "@/components/ui/button";
+import { SquareX, SquareCheck } from "lucide-react";
 
 interface WeekViewProps {
     timetableId: string;
@@ -231,6 +233,12 @@ export function WeekView({
     const handleAddClassToSlot = async (slotId: string, classId: string) => {
         if (!timetable || !user) return;
 
+        // Check if this class already exists in the current view for any slot
+        const existingSlotClass = slotClasses.find(
+            (sc) => sc.class?.id === classId && sc.year === year && sc.weekNumber === weekNumber && !sc.hidden
+        );
+        const textToCopy = existingSlotClass?.text || null;
+
         const slotClassId = id();
         await db.transact(
             db.tx.slotClasses[slotClassId]
@@ -240,6 +248,7 @@ export function WeekView({
                     size: "whole",
                     complete: false,
                     hidden: false,
+                    text: textToCopy || undefined,
                 })
                 .link({
                     owner: user.id,
@@ -256,6 +265,95 @@ export function WeekView({
             await db.transact(db.tx.slotClasses[slotClassId].delete());
         } catch (error) {
             console.error("Failed to delete slot class:", error);
+        }
+    };
+
+    // Function to delete slot
+    const handleDeleteSlot = async (slot: SlotEntity) => {
+        try {
+            await db.transact(db.tx.slots[slot.id].delete());
+        } catch (error) {
+            console.error("Failed to delete slot:", error);
+        }
+    };
+
+    // Check if all slots for a day are disabled for the current week
+    const areAllSlotsDisabledForDay = (dayName: string): boolean => {
+        const daySlots = slotsByDay[dayName] || [];
+        if (daySlots.length === 0) return false;
+
+        const dayDate = getDateForDay(dayName);
+        const weekStart = getWeekStart(dayDate, settings.weekStartDay);
+        const nextWeekStart = new Date(weekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+        return daySlots.every((slot) => {
+            // Check if always disabled
+            if (slot.disabled === true) {
+                return true;
+            }
+
+            // Check if disabled for current week
+            if (!slot.disabledSlots || slot.disabledSlots.length === 0) {
+                return false;
+            }
+
+            return slot.disabledSlots.some((disabledSlot) => {
+                const disableDate = new Date(disabledSlot.disableDate);
+                return disableDate >= weekStart && disableDate < nextWeekStart;
+            });
+        });
+    };
+
+    // Function to toggle disable/enable all slots for a specific day
+    const handleToggleDaySlots = async (dayName: string) => {
+        if (!timetable || !user) return;
+
+        const dayDate = getDateForDay(dayName);
+        const weekStart = getWeekStart(dayDate, settings.weekStartDay);
+        const daySlots = slotsByDay[dayName] || [];
+        const allDisabled = areAllSlotsDisabledForDay(dayName);
+
+        if (allDisabled) {
+            // Enable all slots by removing disabledSlots entries for this week
+            for (const slot of daySlots) {
+                if (slot.disabledSlots) {
+                    const disabledSlotsToRemove = slot.disabledSlots.filter((disabledSlot) => {
+                        const disableDate = new Date(disabledSlot.disableDate);
+                        return disableDate.getTime() === weekStart.getTime();
+                    });
+
+                    for (const disabledSlot of disabledSlotsToRemove) {
+                        await db.transact(db.tx.disabledSlots[disabledSlot.id].delete());
+                    }
+                }
+            }
+        } else {
+            // Disable all slots for this day in the current week
+            for (const slot of daySlots) {
+                // Skip if always disabled
+                if (slot.disabled === true) continue;
+
+                // Check if already disabled for this week
+                const existingDisabledSlot = slot.disabledSlots?.find((disabledSlot) => {
+                    const disableDate = new Date(disabledSlot.disableDate);
+                    return disableDate.getTime() === weekStart.getTime();
+                });
+
+                if (!existingDisabledSlot) {
+                    const disabledSlotId = id();
+                    await db.transact(
+                        db.tx.disabledSlots[disabledSlotId]
+                            .update({
+                                disableDate: weekStart,
+                            })
+                            .link({
+                                owner: user.id,
+                                slot: slot.id,
+                            })
+                    );
+                }
+            }
         }
     };
 
@@ -316,15 +414,37 @@ export function WeekView({
                     {days.map((day) => {
                         const dayDate = getDateForDay(day);
                         const dayNumber = dayDate.getDate();
+                        const daySlots = slotsByDay[day] || [];
                         return (
                             <div
                                 key={day}
-                                className="border-r p-2 text-center text-sm font-medium last:border-r-0"
+                                className="border-r p-2 text-center text-sm font-medium last:border-r-0 flex items-center justify-between"
                             >
-                                <div>{day}</div>
-                                <div className="text-xs text-muted-foreground mt-0.5">
-                                    {dayNumber}
+                                <div className="flex-1 text-center">
+                                    <div>{day}</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                        {dayNumber}
+                                    </div>
                                 </div>
+                                    {daySlots.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleToggleDaySlots(day)}
+                                            className="h-6 px-1.5 text-xs shrink-0"
+                                            title={
+                                                areAllSlotsDisabledForDay(day)
+                                                    ? `Enable all slots for ${day}`
+                                                    : `Disable all slots for ${day}`
+                                            }
+                                        >
+                                            {areAllSlotsDisabledForDay(day) ? (
+                                                <SquareCheck className="h-3 w-3" />
+                                            ) : (
+                                                <SquareX className="h-3 w-3" />
+                                            )}
+                                        </Button>
+                                    )}
                             </div>
                         );
                     })}
@@ -391,6 +511,7 @@ export function WeekView({
                                             availableClasses={availableClasses}
                                             isDisabled={isDisabled}
                                             onEditSlot={handleEditSlot}
+                                            onDeleteSlot={handleDeleteSlot}
                                             onDeleteSlotClass={
                                                 handleDeleteSlotClass
                                             }

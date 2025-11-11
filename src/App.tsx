@@ -22,20 +22,12 @@ import {
 import { SettingsProvider, useSettings } from "@/lib/settings-context";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SettingsPage } from "@/components/settings";
+import { ViewProvider, useView } from "@/lib/view-context";
 
 function TimetableView() {
     const { selectedTimetable } = useTimetable();
     const { settings } = useSettings();
-    const [viewMode, setViewMode] = useState<"week" | "day">("week");
-    const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-        getCurrentWeekStart(settings.weekStartDay)
-    );
-    const [currentDate, setCurrentDate] = useState(() => {
-        const today = new Date();
-        // Set to start of current week based on settings
-        const weekStart = getWeekStart(today, settings.weekStartDay);
-        return weekStart;
-    });
+    const { viewMode, currentWeekStart, currentDate, setViewMode, setCurrentWeekStart, setCurrentDate } = useView();
 
     const handleWeekChange = useCallback(
         (newWeekStart: Date) => {
@@ -45,7 +37,7 @@ function TimetableView() {
                 setCurrentDate(newWeekStart);
             }
         },
-        [viewMode]
+        [viewMode, setCurrentWeekStart, setCurrentDate]
     );
 
     const handleDateChange = useCallback(
@@ -55,7 +47,7 @@ function TimetableView() {
             const weekStart = getWeekStart(newDate, settings.weekStartDay);
             setCurrentWeekStart(weekStart);
         },
-        [settings.weekStartDay]
+        [settings.weekStartDay, setCurrentDate, setCurrentWeekStart]
     );
 
     const handleGoToCurrent = useCallback(() => {
@@ -63,7 +55,7 @@ function TimetableView() {
         const weekStart = getWeekStart(now, settings.weekStartDay);
         setCurrentWeekStart(weekStart);
         setCurrentDate(now);
-    }, [settings.weekStartDay]);
+    }, [settings.weekStartDay, setCurrentWeekStart, setCurrentDate]);
 
     const handleViewModeChange = useCallback((mode: "week" | "day") => {
         setViewMode(mode);
@@ -72,7 +64,7 @@ function TimetableView() {
             const today = new Date();
             setCurrentDate(today);
         }
-    }, []);
+    }, [setViewMode, setCurrentDate]);
 
     if (!selectedTimetable) {
         return (
@@ -173,11 +165,13 @@ function AppContent() {
             <db.SignedIn>
                 <SettingsProvider>
                     <TimetableProvider>
-                        <AppSidebar />
-                        <SidebarInset>
-                            <AppHeader />
-                            <MainContent />
-                        </SidebarInset>
+                        <ViewProviderWrapper>
+                            <AppSidebar />
+                            <SidebarInset>
+                                <AppHeader />
+                                <MainContent />
+                            </SidebarInset>
+                        </ViewProviderWrapper>
                     </TimetableProvider>
                 </SettingsProvider>
             </db.SignedIn>
@@ -191,6 +185,32 @@ function AppContent() {
                 </SettingsProvider>
             </db.SignedOut>
         </SidebarProvider>
+    );
+}
+
+function ViewProviderWrapper({ children }: { children: React.ReactNode }) {
+    const { settings } = useSettings();
+    const [viewMode, setViewMode] = useState<"week" | "day">("week");
+    const [currentWeekStart, setCurrentWeekStart] = useState(() =>
+        getCurrentWeekStart(settings.weekStartDay)
+    );
+    const [currentDate, setCurrentDate] = useState(() => {
+        const today = new Date();
+        const weekStart = getWeekStart(today, settings.weekStartDay);
+        return weekStart;
+    });
+
+    return (
+        <ViewProvider
+            viewMode={viewMode}
+            currentWeekStart={currentWeekStart}
+            currentDate={currentDate}
+            setViewMode={setViewMode}
+            setCurrentWeekStart={setCurrentWeekStart}
+            setCurrentDate={setCurrentDate}
+        >
+            {children}
+        </ViewProvider>
     );
 }
 

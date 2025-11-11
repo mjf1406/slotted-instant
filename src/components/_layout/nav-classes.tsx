@@ -11,6 +11,8 @@ import type { InstaQLEntity } from "@instantdb/react";
 import type { AppSchema } from "@/instant.schema";
 import { CreateClassModal } from "@/components/classes";
 import { getYearAndWeekNumber, getWeekStart } from "@/components/timetables/utils";
+import { useView } from "@/lib/view-context";
+import { Loader2 } from "lucide-react";
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -29,7 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ResponsiveAlertDialog from "@/components/ui/responsive-alert-dialog";
-import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
 
 function DeleteClassDialog({
@@ -89,7 +91,7 @@ function ClassItem({ classItem, isInCurrentView }: { classItem: Class; isInCurre
             <SidebarMenuItem>
                 <div
                     className={`flex items-center w-full group rounded-md ${
-                        isInCurrentView ? "opacity-50" : ""
+                        isInCurrentView ? "opacity-30" : ""
                     }`}
                     style={{
                         backgroundColor: classItem.bgColor || "#ffffff",
@@ -119,6 +121,9 @@ function ClassItem({ classItem, isInCurrentView }: { classItem: Class; isInCurre
                                             style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
                                         />
                                     )}
+                                    {isInCurrentView && (
+                                        <X className="size-3 shrink-0" />
+                                    )}
                                     <span className="truncate">{classItem.name}</span>
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
@@ -144,13 +149,16 @@ function ClassItem({ classItem, isInCurrentView }: { classItem: Class; isInCurre
                                             style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
                                         />
                                     )}
+                                    {isInCurrentView && (
+                                        <X className="size-3 shrink-0" />
+                                    )}
                                     <span className="truncate">{classItem.name}</span>
                                 </SidebarMenuButton>
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
                                         size="icon-sm"
-                                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 hover:bg-white/20"
                                         onClick={(e) => e.stopPropagation()}
                                         aria-label="Class actions"
                                         style={{
@@ -264,14 +272,18 @@ function NavClassesContent() {
     const user = db.useUser();
     const { selectedTimetable } = useTimetable();
     const { settings } = useSettings();
+    const { viewMode, currentWeekStart, currentDate: viewCurrentDate } = useView();
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
     const { state } = useSidebar();
 
-    // Get current week for filtering slotClasses
-    const currentDate = new Date();
-    const weekStart = getWeekStart(currentDate, settings.weekStartDay);
+    // Get current week for filtering slotClasses based on the current view
+    const weekStart = viewMode === "week" 
+        ? currentWeekStart 
+        : getWeekStart(viewCurrentDate, settings.weekStartDay);
     const { year, weekNumber } = getYearAndWeekNumber(weekStart);
 
+    // Load ALL slotClasses for the timetable (no year/weekNumber filter)
+    // This ensures everything is cached and we can filter client-side
     const { data, isLoading } = db.useQuery(
         user?.id && selectedTimetable
             ? {
@@ -291,8 +303,6 @@ function NavClassesContent() {
                       $: {
                           where: {
                               "timetable.id": selectedTimetable.id,
-                              year: year,
-                              weekNumber: weekNumber,
                               hidden: { $ne: true },
                           } as Record<string, unknown>,
                       },
@@ -307,18 +317,21 @@ function NavClassesContent() {
         [data?.classes]
     );
 
-    // Get class IDs that are in the current view
+    // Get class IDs that are in the current view (filter to current week only)
     const classesInCurrentView = React.useMemo(() => {
         const slotClasses = (data?.slotClasses || []) as SlotClassesQueryResult[];
         const classIds = new Set(
             slotClasses
+                .filter((sc) => sc.year === year && sc.weekNumber === weekNumber)
                 .map((sc) => sc.class?.id)
                 .filter(Boolean) as string[]
         );
         return classIds;
-    }, [data?.slotClasses]);
+    }, [data?.slotClasses, year, weekNumber]);
 
-    if (isLoading) {
+    // Only show loading on initial load (when we have no data at all)
+    // Once data is loaded, it's all cached so no loading when changing views
+    if (isLoading && !data?.classes && !data?.slotClasses) {
         return (
             <SidebarGroup>
                 <div className="flex items-center justify-between px-2 py-1.5">
@@ -326,8 +339,9 @@ function NavClassesContent() {
                 </div>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton disabled>
-                            Loading...
+                        <SidebarMenuButton disabled className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading classes...</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -60,6 +60,101 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
         }
     }, [isOpen]);
 
+    const handleSave = useCallback(async () => {
+        if (!onSave || !slotClass) return;
+        setIsSaving(true);
+        try {
+            const updatedSlotClass: SlotClass = {
+                ...slotClass,
+                text: editText || undefined,
+                complete: isCompleted,
+            };
+            await onSave(updatedSlotClass);
+            setIsEditMode(false);
+        } catch (error) {
+            console.error("Failed to save:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    }, [onSave, slotClass, editText, isCompleted]);
+
+    const handleCancel = useCallback(() => {
+        if (!slotClass) return;
+        setIsEditMode(false);
+        setEditText(slotClass.text || slotClass.class?.defaultText || "");
+        setIsCompleted(slotClass.complete || false);
+    }, [slotClass]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Don't trigger shortcuts when typing in inputs, textareas, or contenteditable elements
+            const target = event.target as HTMLElement;
+            if (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable
+            ) {
+                // Allow Ctrl/Cmd+S for save even in text inputs
+                const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+                const modKey = isMac ? event.metaKey : event.ctrlKey;
+                if (modKey && event.key === "s" && isEditMode) {
+                    event.preventDefault();
+                    if (!isSaving && onSave) {
+                        handleSave();
+                    }
+                }
+                return;
+            }
+
+            const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+            const modKey = isMac ? event.metaKey : event.ctrlKey;
+
+            // Save: Ctrl/Cmd + S (only in edit mode)
+            if (modKey && event.key === "s" && isEditMode) {
+                event.preventDefault();
+                if (!isSaving && onSave) {
+                    handleSave();
+                }
+            }
+
+            // Edit: Ctrl/Cmd + E (only when not in edit mode)
+            if (modKey && event.key === "e" && !isEditMode && onSave) {
+                event.preventDefault();
+                setIsEditMode(true);
+            }
+
+            // Toggle complete: Ctrl/Cmd + K
+            if (modKey && event.key === "k") {
+                event.preventDefault();
+                if (isEditMode) {
+                    setIsCompleted(!isCompleted);
+                } else if (onSave && slotClass) {
+                    // Toggle complete even when not in edit mode
+                    const updatedSlotClass: SlotClass = {
+                        ...slotClass,
+                        complete: !slotClass.complete,
+                    };
+                    onSave(updatedSlotClass);
+                }
+            }
+
+            // Escape: Cancel edit mode or close dialog
+            if (event.key === "Escape") {
+                if (isEditMode) {
+                    handleCancel();
+                } else {
+                    onClose();
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, isEditMode, isSaving, onSave, slotClass, isCompleted, handleSave, handleCancel, onClose]);
+
     if (!slotClass || !slotClass.class) return null;
 
     const classDetails = slotClass.class;
@@ -77,30 +172,6 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 
     // Get the text to display - prefer slotClass.text, fallback to class.defaultText
     const displayText = slotClass.text || classDetails.defaultText || "";
-
-    const handleSave = async () => {
-        if (!onSave || !slotClass) return;
-        setIsSaving(true);
-        try {
-            const updatedSlotClass: SlotClass = {
-                ...slotClass,
-                text: editText || undefined,
-                complete: isCompleted,
-            };
-            await onSave(updatedSlotClass);
-            setIsEditMode(false);
-        } catch (error) {
-            console.error("Failed to save:", error);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleCancel = () => {
-        setIsEditMode(false);
-        setEditText(slotClass.text || slotClass.class?.defaultText || "");
-        setIsCompleted(slotClass.complete || false);
-    };
 
     return (
         <Dialog
@@ -126,6 +197,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                         onEditClick={() => setIsEditMode(true)}
                         onClose={onClose}
                         showEditButton={!!onSave}
+                        showShortcuts={true}
                     />
                     <ScrollArea className="grow">
                         <div className="p-6">
