@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, useRef, useMemo } from "react";
+import React, { createContext, useState, useEffect, useRef } from "react";
 import { db } from "./db";
 import type { Timetable } from "./types";
 import type { TimetableContextState } from "./timetable-types";
@@ -15,13 +15,10 @@ const initialState: TimetableContextState = {
     error: null,
 };
 
-export const TimetableContext = createContext<TimetableContextState>(initialState);
+export const TimetableContext =
+    createContext<TimetableContextState>(initialState);
 
-function TimetableProviderContent({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+function TimetableProviderContent({ children }: { children: React.ReactNode }) {
     const user = db.useUser();
     const [selectedTimetable, setSelectedTimetable] =
         useState<Timetable | null>(null);
@@ -44,9 +41,27 @@ function TimetableProviderContent({
             : {}
     );
 
-    const timetables = useMemo(() => {
-        return (data?.timetables || []) as Timetable[];
-    }, [data?.timetables]);
+    // Get raw timetables from query
+    const rawTimetables = (data?.timetables || []) as Timetable[];
+
+    // Track previous IDs to detect actual changes
+    const prevIdsRef = useRef<string>("");
+    const timetablesRef = useRef<Timetable[]>([]);
+
+    // Create a stable string of timetable IDs for comparison
+    const currentIdsString = rawTimetables
+        .map((t) => t.id)
+        .sort()
+        .join(",");
+
+    // Only update timetables if IDs actually changed
+    if (currentIdsString !== prevIdsRef.current) {
+        prevIdsRef.current = currentIdsString;
+        timetablesRef.current = rawTimetables;
+    }
+
+    const timetables = timetablesRef.current;
+    const timetablesIdsString = currentIdsString;
 
     // Sync selected timetable with query params
     // This effect should only run when query params change or timetables load
@@ -74,12 +89,21 @@ function TimetableProviderContent({
             selectedTimetableIdRef.current = firstTimetable.id;
             setSelectedTimetable(firstTimetable);
         }
-    }, [isLoading, timetables, error, user?.id]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, timetablesIdsString, error, user?.id]); // timetables accessed via closure is stable
 
     // Update query params when selected timetable changes
+    // Use ID comparison to prevent infinite loops from object reference changes
     useEffect(() => {
         if (typeof window === "undefined" || !selectedTimetable) {
-            selectedTimetableIdRef.current = null;
+            if (selectedTimetableIdRef.current !== null) {
+                selectedTimetableIdRef.current = null;
+            }
+            return;
+        }
+
+        // Only update if the ID actually changed (not just the object reference)
+        if (selectedTimetable.id === selectedTimetableIdRef.current) {
             return;
         }
 
@@ -94,7 +118,7 @@ function TimetableProviderContent({
             const newUrl = `${window.location.pathname}?${params.toString()}`;
             window.history.replaceState({}, "", newUrl);
         }
-    }, [selectedTimetable]);
+    }, [selectedTimetable?.id]); // Only depend on the ID, not the whole object
 
     return (
         <TimetableContext.Provider
@@ -111,11 +135,7 @@ function TimetableProviderContent({
     );
 }
 
-export function TimetableProvider({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export function TimetableProvider({ children }: { children: React.ReactNode }) {
     return (
         <>
             <db.SignedIn>
@@ -131,4 +151,3 @@ export function TimetableProvider({
 }
 
 export { useTimetable } from "./use-timetable";
-

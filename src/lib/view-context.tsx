@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 
 interface ViewContextType {
     viewMode: "week" | "day";
@@ -32,19 +32,29 @@ export function ViewProvider({
     setCurrentWeekStart: (date: Date) => void;
     setCurrentDate: (date: Date) => void;
 }) {
+    // Memoize the context value to prevent unnecessary re-renders
+    // Note: React's useState setters are stable and don't need to be in deps
+    const value = useMemo(
+        () => ({
+            viewMode,
+            currentWeekStart,
+            currentDate,
+            setViewMode,
+            setCurrentWeekStart,
+            setCurrentDate,
+        }),
+        [
+            viewMode,
+            currentWeekStart.getTime(),
+            currentDate.getTime(),
+            // Setters are stable from useState - they're the same function reference
+            // and don't need to be in deps, but including them won't cause issues
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        ]
+    );
+
     return (
-        <ViewContext.Provider
-            value={{
-                viewMode,
-                currentWeekStart,
-                currentDate,
-                setViewMode,
-                setCurrentWeekStart,
-                setCurrentDate,
-            }}
-        >
-            {children}
-        </ViewContext.Provider>
+        <ViewContext.Provider value={value}>{children}</ViewContext.Provider>
     );
 }
 
@@ -55,4 +65,3 @@ export function useView() {
     }
     return context;
 }
-

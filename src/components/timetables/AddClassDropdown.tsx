@@ -13,7 +13,10 @@ import { Icon, type IconName } from "@/components/ui/icon-picker";
 import type { Class } from "@/lib/types";
 
 interface AddClassDropdownProps {
-    availableClasses: Pick<Class, "id" | "name" | "iconName" | "bgColor" | "textColor">[];
+    availableClasses: Pick<
+        Class,
+        "id" | "name" | "iconName" | "bgColor" | "textColor"
+    >[];
     onAddClass: (classId: string) => void;
     showOnHover?: boolean;
 }
@@ -31,12 +34,15 @@ export function AddClassDropdown({
     }
 
     const buttonClassName = showOnHover
-        ? "mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        ? "mt-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
         : "mt-1";
 
     return (
         <div className={buttonClassName}>
-            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            <DropdownMenu
+                open={isOpen}
+                onOpenChange={setIsOpen}
+            >
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
@@ -57,19 +63,26 @@ export function AddClassDropdown({
                                 color: classItem.textColor || "#000000",
                             }}
                             className={`gap-2 transition-opacity ${
-                                hoveredClassId === classItem.id ? "opacity-100" : "opacity-50"
+                                hoveredClassId === classItem.id
+                                    ? "opacity-100"
+                                    : "opacity-50"
                             }`}
                         >
                             {classItem.iconName ? (
                                 <Icon
                                     name={classItem.iconName as IconName}
                                     className="h-4 w-4 shrink-0"
-                                    style={{ color: classItem.textColor || "#000000" }}
+                                    style={{
+                                        color: classItem.textColor || "#000000",
+                                    }}
                                 />
                             ) : (
                                 <div
                                     className="size-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: classItem.bgColor || "#6b7280" }}
+                                    style={{
+                                        backgroundColor:
+                                            classItem.bgColor || "#6b7280",
+                                    }}
                                 />
                             )}
                             <span>{classItem.name || "Unnamed"}</span>
@@ -80,4 +93,3 @@ export function AddClassDropdown({
         </div>
     );
 }
-

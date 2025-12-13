@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     Dialog,
     DialogContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { SlotClass } from "@/lib/types";
+import { useSettings } from "@/lib/settings-context";
 import ClassDetailsHeader from "./ClassDetailsHeader";
 import ClassDetailsDisplayMode from "./ClassDetailsDisplayMode";
 import ClassDetailsEditMode from "./ClassDetailsEditMode";
@@ -30,27 +31,42 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     onSave,
     currentDate = new Date(),
 }) => {
+    const { settings } = useSettings();
+    const displayZoomLevel = settings.displayZoomLevel ?? 1.0;
     const [isEditMode, setIsEditMode] = useState(false);
     const [editText, setEditText] = useState("");
     const [isCompleted, setIsCompleted] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        if (isEditMode && slotClass) {
-            setEditText(slotClass.text || slotClass.class?.defaultText || "");
-            setIsCompleted(slotClass.complete || false);
-        }
-    }, [isEditMode, slotClass]);
+    // Track the last slotClass ID to prevent unnecessary updates
+    const lastSlotClassIdRef = useRef<string | null>(null);
 
     // Sync local state when slotClass changes (for real-time updates)
+    // Only update when not in edit mode to avoid overwriting user input
     useEffect(() => {
-        if (!isEditMode && slotClass) {
-            // Update local state to reflect the latest slotClass data
-            // This ensures the component reflects real-time changes from the database
+        if (!slotClass) {
+            lastSlotClassIdRef.current = null;
+            return;
+        }
+
+        // Only update if the slotClass ID actually changed (not just object reference)
+        const currentId = slotClass.id;
+        if (currentId === lastSlotClassIdRef.current && !isEditMode) {
+            return;
+        }
+
+        lastSlotClassIdRef.current = currentId;
+
+        if (isEditMode) {
+            // When entering edit mode, initialize with current slotClass values
+            setEditText(slotClass.text || slotClass.class?.defaultText || "");
+            setIsCompleted(slotClass.complete || false);
+        } else {
+            // When not in edit mode, sync with real-time updates from database
             setEditText(slotClass.text || slotClass.class?.defaultText || "");
             setIsCompleted(slotClass.complete || false);
         }
-    }, [slotClass, isEditMode]);
+    }, [slotClass?.id, slotClass?.text, slotClass?.complete, isEditMode]); // Depend on values, not object reference
 
     // Reset edit mode when dialog closes
     useEffect(() => {
@@ -98,7 +114,8 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                 target.isContentEditable
             ) {
                 // Allow Ctrl/Cmd+S for save even in text inputs
-                const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+                const isMac =
+                    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
                 const modKey = isMac ? event.metaKey : event.ctrlKey;
                 if (modKey && event.key === "s" && isEditMode) {
                     event.preventDefault();
@@ -153,7 +170,17 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, isEditMode, isSaving, onSave, slotClass, isCompleted, handleSave, handleCancel, onClose]);
+    }, [
+        isOpen,
+        isEditMode,
+        isSaving,
+        onSave,
+        slotClass,
+        isCompleted,
+        handleSave,
+        handleCancel,
+        onClose,
+    ]);
 
     if (!slotClass || !slotClass.class) return null;
 
@@ -181,6 +208,10 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
             <DialogContent
                 className="fixed! inset-0! w-screen! h-screen! max-w-none! translate-x-0! translate-y-0! top-0! left-0! right-0! bottom-0! rounded-none! p-0 text-2xl [&>button]:hidden"
                 showCloseButton={false}
+                style={{
+                    zoom: displayZoomLevel,
+                    transformOrigin: "center center",
+                }}
             >
                 <DialogTitle className="sr-only">
                     {classDetails.name} - {formattedDate}
@@ -225,4 +256,3 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 };
 
 export default DisplayClassDetails;
-

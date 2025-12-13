@@ -23,6 +23,7 @@ interface CreateTimeSlotDialogContentProps {
     setIsOpen: (open: boolean) => void;
     trigger?: React.ReactNode;
     slot?: SlotEntity | null;
+    viewedWeekStart?: Date; // The week start date for the currently viewed week
 }
 
 export function CreateTimeSlotDialogContent({
@@ -30,6 +31,7 @@ export function CreateTimeSlotDialogContent({
     setIsOpen,
     trigger,
     slot,
+    viewedWeekStart,
 }: CreateTimeSlotDialogContentProps) {
     const {
         formData,
@@ -41,6 +43,7 @@ export function CreateTimeSlotDialogContent({
         disabledThisWeek,
         disableFuture,
         enableFuture,
+        durationForThisWeekOnly,
         handleDayToggle,
         handleTimeChange,
         handleTimetableChange,
@@ -48,8 +51,9 @@ export function CreateTimeSlotDialogContent({
         handleDisabledThisWeekChange,
         handleDisableFutureChange,
         handleEnableFutureChange,
+        handleDurationForThisWeekOnlyChange,
         handleSubmit,
-    } = useCreateTimeSlot(isOpen, slot);
+    } = useCreateTimeSlot(isOpen, slot, viewedWeekStart);
 
     // Determine if slot is currently always disabled
     const isCurrentlyDisabled = slot?.disabled === true;
@@ -201,6 +205,24 @@ export function CreateTimeSlotDialogContent({
                             )}
                         </div>
                     </div>
+                    {slot && (
+                        <div className="flex items-center space-x-2 rounded-md border p-2">
+                            <Checkbox
+                                id="duration-this-week"
+                                checked={durationForThisWeekOnly}
+                                onCheckedChange={
+                                    handleDurationForThisWeekOnlyChange
+                                }
+                                disabled={isLoading}
+                            />
+                            <label
+                                htmlFor="duration-this-week"
+                                className="text-sm font-normal cursor-pointer"
+                            >
+                                Apply duration change for this week only
+                            </label>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-2">

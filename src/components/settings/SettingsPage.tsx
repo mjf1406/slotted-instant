@@ -14,6 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useCallback, useEffect } from "react";
@@ -30,20 +31,36 @@ export function SettingsPage() {
     const [showSlotDuration, setShowSlotDuration] = useState<boolean>(
         settings.showSlotDuration ?? true
     );
+    const [zoomLevel, setZoomLevel] = useState<number>(
+        settings.zoomLevel ?? 1.0
+    );
+    const [displayZoomLevel, setDisplayZoomLevel] = useState<number>(
+        settings.displayZoomLevel ?? 1.0
+    );
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-    // Sync local state when settings change
+    // Sync local state when settings change (only if values actually changed)
     useEffect(() => {
         setWeekStartDay(settings.weekStartDay);
         setTimeFormat(settings.timeFormat);
         setShowSlotDuration(settings.showSlotDuration ?? true);
-    }, [settings]);
+        setZoomLevel(settings.zoomLevel ?? 1.0);
+        setDisplayZoomLevel(settings.displayZoomLevel ?? 1.0);
+    }, [
+        settings.weekStartDay,
+        settings.timeFormat,
+        settings.showSlotDuration,
+        settings.zoomLevel,
+        settings.displayZoomLevel,
+    ]); // Only depend on settings values, not local state
 
     const hasChanges =
         weekStartDay !== settings.weekStartDay ||
         timeFormat !== settings.timeFormat ||
-        showSlotDuration !== (settings.showSlotDuration ?? true);
+        showSlotDuration !== (settings.showSlotDuration ?? true) ||
+        zoomLevel !== (settings.zoomLevel ?? 1.0) ||
+        displayZoomLevel !== (settings.displayZoomLevel ?? 1.0);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -53,6 +70,8 @@ export function SettingsPage() {
                 weekStartDay,
                 timeFormat,
                 showSlotDuration,
+                zoomLevel,
+                displayZoomLevel,
             });
             setSaveMessage("Settings saved successfully!");
             setTimeout(() => setSaveMessage(null), 3000);
@@ -68,6 +87,8 @@ export function SettingsPage() {
         setWeekStartDay(settings.weekStartDay);
         setTimeFormat(settings.timeFormat);
         setShowSlotDuration(settings.showSlotDuration ?? true);
+        setZoomLevel(settings.zoomLevel ?? 1.0);
+        setDisplayZoomLevel(settings.displayZoomLevel ?? 1.0);
         setSaveMessage(null);
     };
 
@@ -188,6 +209,74 @@ export function SettingsPage() {
                             <p className="text-xs text-muted-foreground">
                                 Display the duration (e.g., "1h 30m") next to
                                 the time in each slot header
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                    <div>
+                        <h3 className="text-lg font-semibold">Zoom Settings</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Adjust the zoom level for the interface and display
+                            modal
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                            ⚠️ Note: Zoom changes require a page refresh to take
+                            effect
+                        </p>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="zoomLevel"
+                                className="text-sm font-medium"
+                            >
+                                General Zoom Level: {zoomLevel.toFixed(1)}x
+                            </label>
+                            <Input
+                                id="zoomLevel"
+                                type="range"
+                                min="0.5"
+                                max="2.0"
+                                step="0.1"
+                                value={zoomLevel}
+                                onChange={(e) =>
+                                    setZoomLevel(parseFloat(e.target.value))
+                                }
+                                className="w-full"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Controls zoom for the main interface (excluding
+                                display modal)
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="displayZoomLevel"
+                                className="text-sm font-medium"
+                            >
+                                Display Modal Zoom Level:{" "}
+                                {displayZoomLevel.toFixed(1)}x
+                            </label>
+                            <Input
+                                id="displayZoomLevel"
+                                type="range"
+                                min="0.5"
+                                max="2.0"
+                                step="0.1"
+                                value={displayZoomLevel}
+                                onChange={(e) =>
+                                    setDisplayZoomLevel(
+                                        parseFloat(e.target.value)
+                                    )
+                                }
+                                className="w-full"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Controls zoom for the display modal only
                             </p>
                         </div>
                     </div>

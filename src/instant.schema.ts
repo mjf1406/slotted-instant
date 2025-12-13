@@ -76,10 +76,18 @@ const _schema = i.schema({
         disabledSlots: i.entity({
             disableDate: i.date().indexed(),
         }),
+        slotDurationOverrides: i.entity({
+            weekNumber: i.number().indexed(),
+            year: i.number().indexed(),
+            startTime: i.string().indexed(),
+            endTime: i.string().indexed(),
+        }),
         userSettings: i.entity({
             weekStartDay: i.string().indexed(), // "sunday" | "monday"
             timeFormat: i.string().indexed(), // "12" | "24"
             showSlotDuration: i.boolean().indexed().optional(),
+            zoomLevel: i.number().indexed().optional(), // Zoom for general UI (0.5 to 2.0, default 1.0)
+            displayZoomLevel: i.number().indexed().optional(), // Zoom for display modal (0.5 to 2.0, default 1.0)
         }),
     },
     links: {
@@ -279,6 +287,32 @@ const _schema = i.schema({
                 on: "slots",
                 has: "many",
                 label: "disabledSlots",
+            },
+        },
+        slotDurationOverridesOwners: {
+            forward: {
+                on: "slotDurationOverrides",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerSlotDurationOverrides",
+            },
+        },
+        slotDurationOverridesSlots: {
+            forward: {
+                on: "slotDurationOverrides",
+                has: "one",
+                label: "slot",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "slots",
+                has: "many",
+                label: "durationOverrides",
             },
         },
         userSettingsOwners: {

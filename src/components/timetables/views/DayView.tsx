@@ -46,6 +46,7 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                       slots: {
                           timetable: {},
                           disabledSlots: {},
+                          durationOverrides: {},
                       },
                       slotClasses: {
                           slot: {},
@@ -175,8 +176,23 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
 
     // Helper function to calculate position and height for a slot
     const getSlotStyle = (slot: SlotEntity) => {
-        const startMinutes = timeToMinutes(slot.startTime);
-        const endMinutes = timeToMinutes(slot.endTime);
+        // Check for duration override for current week
+        let effectiveStartTime = slot.startTime;
+        let effectiveEndTime = slot.endTime;
+
+        if (slot.durationOverrides && slot.durationOverrides.length > 0) {
+            const override = slot.durationOverrides.find(
+                (o: { year: number; weekNumber: number }) =>
+                    o.year === year && o.weekNumber === weekNumber
+            );
+            if (override) {
+                effectiveStartTime = override.startTime;
+                effectiveEndTime = override.endTime;
+            }
+        }
+
+        const startMinutes = timeToMinutes(effectiveStartTime);
+        const endMinutes = timeToMinutes(effectiveEndTime);
         const slotDuration = endMinutes - startMinutes;
 
         // Calculate position from top (as percentage)
@@ -214,10 +230,14 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
 
         // First check if disabled for current week (disabledSlots takes priority)
         if (slot.disabledSlots && slot.disabledSlots.length > 0) {
-            const isDisabledForWeek = slot.disabledSlots.some((disabledSlot) => {
-                const disableDate = new Date(disabledSlot.disableDate);
-                return disableDate >= weekStart && disableDate < nextWeekStart;
-            });
+            const isDisabledForWeek = slot.disabledSlots.some(
+                (disabledSlot) => {
+                    const disableDate = new Date(disabledSlot.disableDate);
+                    return (
+                        disableDate >= weekStart && disableDate < nextWeekStart
+                    );
+                }
+            );
             if (isDisabledForWeek) {
                 return true;
             }
@@ -247,7 +267,11 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
 
         // Check if this class already exists in the current view for any slot
         const existingSlotClass = slotClasses.find(
-            (sc) => sc.class?.id === classId && sc.year === year && sc.weekNumber === weekNumber && !sc.hidden
+            (sc) =>
+                sc.class?.id === classId &&
+                sc.year === year &&
+                sc.weekNumber === weekNumber &&
+                !sc.hidden
         );
         const textToCopy = existingSlotClass?.text || null;
 
@@ -326,13 +350,21 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
             // Enable all slots by removing disabledSlots entries for this week
             for (const slot of daySlots) {
                 if (slot.disabledSlots) {
-                    const disabledSlotsToRemove = slot.disabledSlots.filter((disabledSlot) => {
-                        const disableDate = new Date(disabledSlot.disableDate);
-                        return disableDate.getTime() === weekStart.getTime();
-                    });
+                    const disabledSlotsToRemove = slot.disabledSlots.filter(
+                        (disabledSlot) => {
+                            const disableDate = new Date(
+                                disabledSlot.disableDate
+                            );
+                            return (
+                                disableDate.getTime() === weekStart.getTime()
+                            );
+                        }
+                    );
 
                     for (const disabledSlot of disabledSlotsToRemove) {
-                        await db.transact(db.tx.disabledSlots[disabledSlot.id].delete());
+                        await db.transact(
+                            db.tx.disabledSlots[disabledSlot.id].delete()
+                        );
                     }
                 }
             }
@@ -343,10 +375,12 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                 if (slot.disabled === true) continue;
 
                 // Check if already disabled for this week
-                const existingDisabledSlot = slot.disabledSlots?.find((disabledSlot) => {
-                    const disableDate = new Date(disabledSlot.disableDate);
-                    return disableDate.getTime() === weekStart.getTime();
-                });
+                const existingDisabledSlot = slot.disabledSlots?.find(
+                    (disabledSlot) => {
+                        const disableDate = new Date(disabledSlot.disableDate);
+                        return disableDate.getTime() === weekStart.getTime();
+                    }
+                );
 
                 if (!existingDisabledSlot) {
                     const disabledSlotId = id();
@@ -409,7 +443,9 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                 >
                     <div className="border-r p-2 text-sm font-medium">Time</div>
                     <div className="border-r p-2 text-center text-sm font-medium flex items-center justify-between">
-                        <span className="flex-1 text-center">{formattedDate}</span>
+                        <span className="flex-1 text-center">
+                            {formattedDate}
+                        </span>
                         {daySlots.length > 0 && (
                             <Button
                                 variant="ghost"
@@ -497,7 +533,10 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                                             handleDeleteSlotClass
                                         }
                                         onAddClassToSlot={(classId: string) =>
-                                            handleAddClassToSlot(slot.id, classId)
+                                            handleAddClassToSlot(
+                                                slot.id,
+                                                classId
+                                            )
                                         }
                                         onSlotClassClick={handleSlotClassClick}
                                         style={style}
@@ -515,6 +554,7 @@ export function DayView({ timetableId, currentDate }: DayViewProps) {
                     isOpen={editDialogOpen}
                     setIsOpen={handleEditDialogClose}
                     slot={editingSlot}
+                    viewedWeekStart={weekStart}
                 />
             )}
 

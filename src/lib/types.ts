@@ -56,6 +56,7 @@ export type SlotEntity = InstaQLEntity<
         timetable: Record<string, never>;
         slotClasses: Record<string, never>;
         disabledSlots: Record<string, never>;
+        durationOverrides: Record<string, never>;
     }
 >;
 
@@ -79,6 +80,15 @@ export type DisabledSlot = InstaQLEntity<
     }
 >;
 
+export type SlotDurationOverride = InstaQLEntity<
+    AppSchema,
+    "slotDurationOverrides",
+    {
+        owner: Record<string, never>;
+        slot: Record<string, never>;
+    }
+>;
+
 // User Role type
 export type UserRole = "teacher" | "admin";
 
@@ -93,4 +103,3 @@ export function isUserRole(value: string): value is UserRole {
 export function isSlotSize(value: string): value is SlotSize {
     return value === "whole" || value === "split";
 }
-

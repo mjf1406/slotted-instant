@@ -17,6 +17,8 @@ const defaultSettings: UserSettings = {
     weekStartDay: "monday",
     timeFormat: "24",
     showSlotDuration: true,
+    zoomLevel: 1.0,
+    displayZoomLevel: 1.0,
 };
 
 export const SettingsContext = createContext<SettingsContextState>({
@@ -25,11 +27,7 @@ export const SettingsContext = createContext<SettingsContextState>({
     updateSettings: async () => {},
 });
 
-function SettingsProviderContent({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+function SettingsProviderContent({ children }: { children: React.ReactNode }) {
     const user = db.useUser();
 
     const { data, isLoading } = db.useQuery(
@@ -47,25 +45,47 @@ function SettingsProviderContent({
 
     const settingsData = data?.userSettings?.[0];
 
+    // Memoize settings with deep comparison to prevent unnecessary re-renders
     const settings: UserSettings = useMemo(() => {
         if (!settingsData) {
             return defaultSettings;
         }
-        return {
-            weekStartDay: (settingsData.weekStartDay as WeekStartDay) || "monday",
+        const newSettings = {
+            weekStartDay:
+                (settingsData.weekStartDay as WeekStartDay) || "monday",
             timeFormat: (settingsData.timeFormat as TimeFormat) || "24",
-            showSlotDuration: settingsData.showSlotDuration !== undefined ? settingsData.showSlotDuration : true,
+            showSlotDuration:
+                settingsData.showSlotDuration !== undefined
+                    ? settingsData.showSlotDuration
+                    : true,
+            zoomLevel:
+                settingsData.zoomLevel !== undefined
+                    ? settingsData.zoomLevel
+                    : 1.0,
+            displayZoomLevel:
+                settingsData.displayZoomLevel !== undefined
+                    ? settingsData.displayZoomLevel
+                    : 1.0,
         };
-    }, [settingsData]);
+        return newSettings;
+    }, [
+        settingsData?.weekStartDay,
+        settingsData?.timeFormat,
+        settingsData?.showSlotDuration,
+        settingsData?.zoomLevel,
+        settingsData?.displayZoomLevel,
+    ]); // Only depend on the actual values, not the whole object
 
     // Create default settings if they don't exist
     useEffect(() => {
         if (!isLoading && !settingsData && user?.id) {
             db.transact(
-                db.tx.userSettings[id()].update({
-                    weekStartDay: defaultSettings.weekStartDay,
-                    timeFormat: defaultSettings.timeFormat,
-                }).link({ owner: user.id })
+                db.tx.userSettings[id()]
+                    .update({
+                        weekStartDay: defaultSettings.weekStartDay,
+                        timeFormat: defaultSettings.timeFormat,
+                    })
+                    .link({ owner: user.id })
             );
         }
     }, [isLoading, settingsData, user?.id]);
@@ -74,7 +94,7 @@ function SettingsProviderContent({
         if (!user?.id) return;
 
         const newSettings = { ...settings, ...updates };
-        
+
         if (settingsData) {
             // Update existing settings
             await db.transact(
@@ -82,16 +102,22 @@ function SettingsProviderContent({
                     weekStartDay: newSettings.weekStartDay,
                     timeFormat: newSettings.timeFormat,
                     showSlotDuration: newSettings.showSlotDuration ?? true,
+                    zoomLevel: newSettings.zoomLevel ?? 1.0,
+                    displayZoomLevel: newSettings.displayZoomLevel ?? 1.0,
                 })
             );
         } else {
             // Create new settings
             await db.transact(
-                db.tx.userSettings[id()].update({
-                    weekStartDay: newSettings.weekStartDay,
-                    timeFormat: newSettings.timeFormat,
-                    showSlotDuration: newSettings.showSlotDuration ?? true,
-                }).link({ owner: user.id })
+                db.tx.userSettings[id()]
+                    .update({
+                        weekStartDay: newSettings.weekStartDay,
+                        timeFormat: newSettings.timeFormat,
+                        showSlotDuration: newSettings.showSlotDuration ?? true,
+                        zoomLevel: newSettings.zoomLevel ?? 1.0,
+                        displayZoomLevel: newSettings.displayZoomLevel ?? 1.0,
+                    })
+                    .link({ owner: user.id })
             );
         }
     };
@@ -109,11 +135,7 @@ function SettingsProviderContent({
     );
 }
 
-export function SettingsProvider({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return (
         <>
             <db.SignedIn>
@@ -135,4 +157,3 @@ export function SettingsProvider({
 }
 
 export { useSettings } from "./use-settings";
-

@@ -8,6 +8,13 @@ An app for teachers to plan their lessons in certain time slots.
 
 ## Change Log
 
+### 2025/12/13
+
+-   UX: added a toast to the app to inform the user when the browser zoom level changes
+-   UX: added zoom level settings in the settings page
+-   UX: slots can now be edited for the viewed week only
+-   BUG: the viewed slot is now correctly disabled instead of the current week's slot only
+
 ### 2025/11/11
 
 -   BUG: time slot action menu now correctly appears even when there are no classes in the slot

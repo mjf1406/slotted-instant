@@ -50,6 +50,7 @@ export function WeekView({
                       slots: {
                           timetable: {},
                           disabledSlots: {},
+                          durationOverrides: {},
                       },
                       slotClasses: {
                           slot: {},
@@ -166,8 +167,23 @@ export function WeekView({
 
     // Helper function to calculate position and height for a slot
     const getSlotStyle = (slot: SlotEntity) => {
-        const startMinutes = timeToMinutes(slot.startTime);
-        const endMinutes = timeToMinutes(slot.endTime);
+        // Check for duration override for current week
+        let effectiveStartTime = slot.startTime;
+        let effectiveEndTime = slot.endTime;
+
+        if (slot.durationOverrides && slot.durationOverrides.length > 0) {
+            const override = slot.durationOverrides.find(
+                (o: { year: number; weekNumber: number }) =>
+                    o.year === year && o.weekNumber === weekNumber
+            );
+            if (override) {
+                effectiveStartTime = override.startTime;
+                effectiveEndTime = override.endTime;
+            }
+        }
+
+        const startMinutes = timeToMinutes(effectiveStartTime);
+        const endMinutes = timeToMinutes(effectiveEndTime);
         const slotDuration = endMinutes - startMinutes;
 
         // Calculate position from top (as percentage)
@@ -204,12 +220,15 @@ export function WeekView({
 
         // First check if disabled for current week (disabledSlots takes priority)
         if (slot.disabledSlots && slot.disabledSlots.length > 0) {
-            const isDisabledForWeek = slot.disabledSlots.some((disabledSlot) => {
-                const disableDate = new Date(disabledSlot.disableDate);
-                return (
-                    disableDate >= currentWeekStart && disableDate < nextWeekMonday
-                );
-            });
+            const isDisabledForWeek = slot.disabledSlots.some(
+                (disabledSlot) => {
+                    const disableDate = new Date(disabledSlot.disableDate);
+                    return (
+                        disableDate >= currentWeekStart &&
+                        disableDate < nextWeekMonday
+                    );
+                }
+            );
             if (isDisabledForWeek) {
                 return true;
             }
@@ -239,7 +258,11 @@ export function WeekView({
 
         // Check if this class already exists in the current view for any slot
         const existingSlotClass = slotClasses.find(
-            (sc) => sc.class?.id === classId && sc.year === year && sc.weekNumber === weekNumber && !sc.hidden
+            (sc) =>
+                sc.class?.id === classId &&
+                sc.year === year &&
+                sc.weekNumber === weekNumber &&
+                !sc.hidden
         );
         const textToCopy = existingSlotClass?.text || null;
 
@@ -322,13 +345,21 @@ export function WeekView({
             // Enable all slots by removing disabledSlots entries for this week
             for (const slot of daySlots) {
                 if (slot.disabledSlots) {
-                    const disabledSlotsToRemove = slot.disabledSlots.filter((disabledSlot) => {
-                        const disableDate = new Date(disabledSlot.disableDate);
-                        return disableDate.getTime() === weekStart.getTime();
-                    });
+                    const disabledSlotsToRemove = slot.disabledSlots.filter(
+                        (disabledSlot) => {
+                            const disableDate = new Date(
+                                disabledSlot.disableDate
+                            );
+                            return (
+                                disableDate.getTime() === weekStart.getTime()
+                            );
+                        }
+                    );
 
                     for (const disabledSlot of disabledSlotsToRemove) {
-                        await db.transact(db.tx.disabledSlots[disabledSlot.id].delete());
+                        await db.transact(
+                            db.tx.disabledSlots[disabledSlot.id].delete()
+                        );
                     }
                 }
             }
@@ -339,10 +370,12 @@ export function WeekView({
                 if (slot.disabled === true) continue;
 
                 // Check if already disabled for this week
-                const existingDisabledSlot = slot.disabledSlots?.find((disabledSlot) => {
-                    const disableDate = new Date(disabledSlot.disableDate);
-                    return disableDate.getTime() === weekStart.getTime();
-                });
+                const existingDisabledSlot = slot.disabledSlots?.find(
+                    (disabledSlot) => {
+                        const disableDate = new Date(disabledSlot.disableDate);
+                        return disableDate.getTime() === weekStart.getTime();
+                    }
+                );
 
                 if (!existingDisabledSlot) {
                     const disabledSlotId = id();
@@ -430,25 +463,27 @@ export function WeekView({
                                         {dayNumber}
                                     </div>
                                 </div>
-                                    {daySlots.length > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleToggleDaySlots(day)}
-                                            className="h-6 px-1.5 text-xs shrink-0"
-                                            title={
-                                                areAllSlotsDisabledForDay(day)
-                                                    ? `Enable all slots for ${day}`
-                                                    : `Disable all slots for ${day}`
-                                            }
-                                        >
-                                            {areAllSlotsDisabledForDay(day) ? (
-                                                <SquareCheck className="h-3 w-3" />
-                                            ) : (
-                                                <SquareX className="h-3 w-3" />
-                                            )}
-                                        </Button>
-                                    )}
+                                {daySlots.length > 0 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            handleToggleDaySlots(day)
+                                        }
+                                        className="h-6 px-1.5 text-xs shrink-0"
+                                        title={
+                                            areAllSlotsDisabledForDay(day)
+                                                ? `Enable all slots for ${day}`
+                                                : `Disable all slots for ${day}`
+                                        }
+                                    >
+                                        {areAllSlotsDisabledForDay(day) ? (
+                                            <SquareCheck className="h-3 w-3" />
+                                        ) : (
+                                            <SquareX className="h-3 w-3" />
+                                        )}
+                                    </Button>
+                                )}
                             </div>
                         );
                     })}
@@ -546,6 +581,7 @@ export function WeekView({
                     isOpen={editDialogOpen}
                     setIsOpen={handleEditDialogClose}
                     slot={editingSlot}
+                    viewedWeekStart={currentWeekStart}
                 />
             )}
 

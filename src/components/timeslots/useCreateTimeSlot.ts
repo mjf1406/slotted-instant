@@ -4,6 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import { id } from "@instantdb/react";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
+import { useSettings } from "@/lib/settings-context";
+import {
+    getWeekStart,
+    getYearAndWeekNumber,
+} from "@/components/timetables/utils";
 import type { FormData, FormErrors } from "./types";
 import type { SlotEntity } from "@/lib/types";
 import { validateForm } from "./validation";
@@ -14,15 +19,6 @@ const DEFAULT_FORM_DATA: FormData = {
     end_time: "10:00",
     timetableId: "",
 };
-
-// Get Monday of the week for a given date
-function getMondayOfWeek(date: Date): Date {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-    return new Date(d.setDate(diff));
-}
 
 // Helper function to find all matching slots (same day, startTime, endTime, timetable)
 // This filters slots client-side from the provided slots array
@@ -49,7 +45,8 @@ function findMatchingSlots(
 
 export function useCreateTimeSlot(
     isOpen: boolean,
-    slot?: SlotEntity | null
+    slot?: SlotEntity | null,
+    viewedWeekStart?: Date
 ) {
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
@@ -58,9 +55,17 @@ export function useCreateTimeSlot(
     const [disabledThisWeek, setDisabledThisWeek] = useState(false);
     const [disableFuture, setDisableFuture] = useState(false);
     const [enableFuture, setEnableFuture] = useState(false);
+    const [durationForThisWeekOnly, setDurationForThisWeekOnly] =
+        useState(false);
     const { selectedTimetable, timetables } = useTimetable();
+    const { settings } = useSettings();
     const user = db.useUser();
     const isEditMode = !!slot;
+
+    // Use viewed week start if provided, otherwise use current week
+    const effectiveWeekStart = viewedWeekStart
+        ? viewedWeekStart
+        : getWeekStart(new Date(), settings.weekStartDay);
 
     // Query all slots for the selected timetable to enable finding matching slots
     const { data: slotsData } = db.useQuery(
@@ -99,18 +104,16 @@ export function useCreateTimeSlot(
             // Check if slot is always disabled
             setDisabledAlways(slot.disabled === true);
 
-            // Check if slot is disabled for current week
-            const today = new Date();
-            const currentWeekMonday = getMondayOfWeek(today);
-            const nextWeekMonday = new Date(currentWeekMonday);
-            nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
+            // Check if slot is disabled for viewed week
+            const nextWeekStart = new Date(effectiveWeekStart);
+            nextWeekStart.setDate(nextWeekStart.getDate() + 7);
 
             const isDisabledForWeek =
                 slot.disabledSlots?.some((disabledSlot) => {
                     const disableDate = new Date(disabledSlot.disableDate);
                     return (
-                        disableDate >= currentWeekMonday &&
-                        disableDate < nextWeekMonday
+                        disableDate >= effectiveWeekStart &&
+                        disableDate < nextWeekStart
                     );
                 }) || false;
 
@@ -127,7 +130,7 @@ export function useCreateTimeSlot(
             setEnableFuture(false);
         }
         setErrors({});
-    }, [isOpen, slot, selectedTimetable]);
+    }, [isOpen, slot, selectedTimetable, effectiveWeekStart]);
 
     // Set default timetable when dialog opens (only if form doesn't have one and not in edit mode)
     useEffect(() => {
@@ -222,6 +225,10 @@ export function useCreateTimeSlot(
         }
     };
 
+    const handleDurationForThisWeekOnlyChange = (checked: boolean) => {
+        setDurationForThisWeekOnly(checked);
+    };
+
     const handleSubmit = async (): Promise<boolean> => {
         const validationErrors = validateForm(formData, isEditMode);
         if (Object.keys(validationErrors).length > 0) {
@@ -243,10 +250,8 @@ export function useCreateTimeSlot(
         setIsLoading(true);
 
         try {
-            const today = new Date();
-            const currentWeekMonday = getMondayOfWeek(today);
-            const nextWeekMonday = new Date(currentWeekMonday);
-            nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
+            const nextWeekStart = new Date(effectiveWeekStart);
+            nextWeekStart.setDate(nextWeekStart.getDate() + 7);
 
             if (isEditMode && slot) {
                 const slotDay = formData.days[0] || slot.day;
@@ -293,7 +298,9 @@ export function useCreateTimeSlot(
                     );
                     // Update all matching slots to enabled and remove all their disabledSlots
                     for (const matchingSlotId of matchingSlotIds) {
-                        const matchingSlot = allSlots.find((s: SlotEntity) => s.id === matchingSlotId);
+                        const matchingSlot = allSlots.find(
+                            (s: SlotEntity) => s.id === matchingSlotId
+                        );
                         await db.transact(
                             db.tx.slots[matchingSlotId].update({
                                 disabled: false,
@@ -303,7 +310,9 @@ export function useCreateTimeSlot(
                         if (matchingSlot?.disabledSlots) {
                             for (const disabledSlot of matchingSlot.disabledSlots) {
                                 await db.transact(
-                                    db.tx.disabledSlots[disabledSlot.id].delete()
+                                    db.tx.disabledSlots[
+                                        disabledSlot.id
+                                    ].delete()
                                 );
                             }
                         }
@@ -328,34 +337,89 @@ export function useCreateTimeSlot(
                 }
                 // Handle normal update (not future operations)
                 else {
-                    // Update existing slot
-                    await db.transact(
-                        db.tx.slots[slot.id].update({
-                            day: slotDay,
-                            startTime: slotStartTime,
-                            endTime: slotEndTime,
-                            disabled: disabledAlways,
-                        })
+                    // Handle duration override for this week first
+                    const { year, weekNumber } =
+                        getYearAndWeekNumber(effectiveWeekStart);
+                    const existingOverride = slot.durationOverrides?.find(
+                        (override: { year: number; weekNumber: number }) =>
+                            override.year === year &&
+                            override.weekNumber === weekNumber
                     );
 
-                    // Handle disabled state for current week
+                    if (durationForThisWeekOnly) {
+                        // Only create/update duration override for this week, don't update slot's default times
+                        if (existingOverride) {
+                            await db.transact(
+                                db.tx.slotDurationOverrides[
+                                    existingOverride.id
+                                ].update({
+                                    startTime: slotStartTime,
+                                    endTime: slotEndTime,
+                                })
+                            );
+                        } else {
+                            const overrideId = id();
+                            await db.transact(
+                                db.tx.slotDurationOverrides[overrideId]
+                                    .update({
+                                        weekNumber,
+                                        year,
+                                        startTime: slotStartTime,
+                                        endTime: slotEndTime,
+                                    })
+                                    .link({
+                                        owner: user.id,
+                                        slot: slot.id,
+                                    })
+                            );
+                        }
+                        // Still update day and disabled state, but not times
+                        await db.transact(
+                            db.tx.slots[slot.id].update({
+                                day: slotDay,
+                                disabled: disabledAlways,
+                            })
+                        );
+                    } else {
+                        // Update slot's default times (for all time)
+                        await db.transact(
+                            db.tx.slots[slot.id].update({
+                                day: slotDay,
+                                startTime: slotStartTime,
+                                endTime: slotEndTime,
+                                disabled: disabledAlways,
+                            })
+                        );
+                        // Remove duration override if it exists (since we're updating for all time)
+                        if (existingOverride) {
+                            await db.transact(
+                                db.tx.slotDurationOverrides[
+                                    existingOverride.id
+                                ].delete()
+                            );
+                        }
+                    }
+
+                    // Handle disabled state for viewed week
                     const existingDisabledSlot = slot.disabledSlots?.find(
                         (disabledSlot) => {
-                            const disableDate = new Date(disabledSlot.disableDate);
+                            const disableDate = new Date(
+                                disabledSlot.disableDate
+                            );
                             return (
-                                disableDate >= currentWeekMonday &&
-                                disableDate < nextWeekMonday
+                                disableDate >= effectiveWeekStart &&
+                                disableDate < nextWeekStart
                             );
                         }
                     );
 
                     if (disabledThisWeek && !existingDisabledSlot) {
-                        // Create disabled slot entry for current week
+                        // Create disabled slot entry for viewed week
                         const disabledSlotId = id();
                         await db.transact(
                             db.tx.disabledSlots[disabledSlotId]
                                 .update({
-                                    disableDate: currentWeekMonday,
+                                    disableDate: effectiveWeekStart,
                                 })
                                 .link({
                                     owner: user.id,
@@ -365,7 +429,9 @@ export function useCreateTimeSlot(
                     } else if (!disabledThisWeek && existingDisabledSlot) {
                         // Delete disabled slot entry for current week
                         await db.transact(
-                            db.tx.disabledSlots[existingDisabledSlot.id].delete()
+                            db.tx.disabledSlots[
+                                existingDisabledSlot.id
+                            ].delete()
                         );
                     }
                 }
@@ -387,13 +453,13 @@ export function useCreateTimeSlot(
                             })
                     );
 
-                    // If disabled this week is checked, create disabled slot entry for current week
+                    // If disabled this week is checked, create disabled slot entry for viewed week
                     if (disabledThisWeek) {
                         const disabledSlotId = id();
                         await db.transact(
                             db.tx.disabledSlots[disabledSlotId]
                                 .update({
-                                    disableDate: currentWeekMonday,
+                                    disableDate: effectiveWeekStart,
                                 })
                                 .link({
                                     owner: user.id,
@@ -433,6 +499,7 @@ export function useCreateTimeSlot(
             setDisabledThisWeek(false);
             setDisableFuture(false);
             setEnableFuture(false);
+            setDurationForThisWeekOnly(false);
             setErrors({});
             return true;
         } catch (error) {
@@ -441,7 +508,9 @@ export function useCreateTimeSlot(
                 error
             );
             setErrors({
-                days: `Failed to ${isEditMode ? "update" : "create"} slots. Please try again.`,
+                days: `Failed to ${
+                    isEditMode ? "update" : "create"
+                } slots. Please try again.`,
             });
             return false;
         } finally {
@@ -453,10 +522,14 @@ export function useCreateTimeSlot(
     const selectedTimetableForForm = timetables.find(
         (t) => t.id === formData.timetableId
     );
-    const formDays =
-        (selectedTimetableForForm?.days as string[]) ||
-        (selectedTimetable?.days as string[]) ||
-        ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const formDays = (selectedTimetableForForm?.days as string[]) ||
+        (selectedTimetable?.days as string[]) || [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+        ];
 
     return {
         formData,
@@ -476,7 +549,8 @@ export function useCreateTimeSlot(
         handleDisabledThisWeekChange,
         handleDisableFutureChange,
         handleEnableFutureChange,
+        durationForThisWeekOnly,
+        handleDurationForThisWeekOnlyChange,
         handleSubmit,
     };
 }
-
