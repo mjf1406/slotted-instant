@@ -4,14 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import { id } from "@instantdb/react";
 import { db } from "@/lib/db";
 import { useTimetable } from "@/lib/timetable-context";
-import { useSettings } from "@/lib/settings-context";
-import {
-    getWeekStart,
-    getYearAndWeekNumber,
-} from "@/components/timetables/utils";
 import type { FormData, FormErrors } from "./types";
 import type { SlotEntity } from "@/lib/types";
 import { validateForm } from "./validation";
+import { getYearAndWeekNumber } from "@/components/timetables/utils";
 
 const DEFAULT_FORM_DATA: FormData = {
     days: [],
@@ -19,6 +15,15 @@ const DEFAULT_FORM_DATA: FormData = {
     end_time: "10:00",
     timetableId: "",
 };
+
+// Get Monday of the week for a given date
+function getMondayOfWeek(date: Date): Date {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+}
 
 // Helper function to find all matching slots (same day, startTime, endTime, timetable)
 // This filters slots client-side from the provided slots array
@@ -58,14 +63,8 @@ export function useCreateTimeSlot(
     const [durationForThisWeekOnly, setDurationForThisWeekOnly] =
         useState(false);
     const { selectedTimetable, timetables } = useTimetable();
-    const { settings } = useSettings();
     const user = db.useUser();
     const isEditMode = !!slot;
-
-    // Use viewed week start if provided, otherwise use current week
-    const effectiveWeekStart = viewedWeekStart
-        ? viewedWeekStart
-        : getWeekStart(new Date(), settings.weekStartDay);
 
     // Query all slots for the selected timetable to enable finding matching slots
     const { data: slotsData } = db.useQuery(
@@ -94,10 +93,30 @@ export function useCreateTimeSlot(
             // Edit mode: populate form with slot data
             // Ensure timetable is set - if not available yet, use empty string (will be set when relation loads)
             const timetableId = slot.timetable?.id || "";
+
+            // Check if slot has duration override for viewed week
+            const weekStart = viewedWeekStart || new Date();
+            const { year: viewedYear, weekNumber: viewedWeekNum } =
+                getYearAndWeekNumber(weekStart);
+            const durationOverride = slot.durationOverrides?.find(
+                (override) =>
+                    override.year === viewedYear &&
+                    override.weekNumber === viewedWeekNum
+            );
+            const hasDurationOverride = !!durationOverride;
+
+            // Use override times if they exist, otherwise use base slot times
+            const displayStartTime = durationOverride
+                ? durationOverride.startTime
+                : slot.startTime;
+            const displayEndTime = durationOverride
+                ? durationOverride.endTime
+                : slot.endTime;
+
             setFormData({
                 days: [slot.day],
-                start_time: slot.startTime,
-                end_time: slot.endTime,
+                start_time: displayStartTime,
+                end_time: displayEndTime,
                 timetableId,
             });
 
@@ -105,19 +124,21 @@ export function useCreateTimeSlot(
             setDisabledAlways(slot.disabled === true);
 
             // Check if slot is disabled for viewed week
-            const nextWeekStart = new Date(effectiveWeekStart);
-            nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+            const currentWeekMonday = getMondayOfWeek(weekStart);
+            const nextWeekMonday = new Date(currentWeekMonday);
+            nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
 
             const isDisabledForWeek =
                 slot.disabledSlots?.some((disabledSlot) => {
                     const disableDate = new Date(disabledSlot.disableDate);
                     return (
-                        disableDate >= effectiveWeekStart &&
-                        disableDate < nextWeekStart
+                        disableDate >= currentWeekMonday &&
+                        disableDate < nextWeekMonday
                     );
                 }) || false;
 
             setDisabledThisWeek(isDisabledForWeek);
+            setDurationForThisWeekOnly(hasDurationOverride);
         } else if (isOpen && !slot) {
             // Create mode: reset form
             setFormData({
@@ -128,9 +149,10 @@ export function useCreateTimeSlot(
             setDisabledThisWeek(false);
             setDisableFuture(false);
             setEnableFuture(false);
+            setDurationForThisWeekOnly(false);
         }
         setErrors({});
-    }, [isOpen, slot, selectedTimetable, effectiveWeekStart]);
+    }, [isOpen, slot, selectedTimetable, viewedWeekStart]);
 
     // Set default timetable when dialog opens (only if form doesn't have one and not in edit mode)
     useEffect(() => {
@@ -250,8 +272,11 @@ export function useCreateTimeSlot(
         setIsLoading(true);
 
         try {
-            const nextWeekStart = new Date(effectiveWeekStart);
-            nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+            const weekStart = viewedWeekStart || new Date();
+            const currentWeekMonday = getMondayOfWeek(weekStart);
+            const nextWeekMonday = new Date(currentWeekMonday);
+            nextWeekMonday.setDate(nextWeekMonday.getDate() + 7);
+            const { year, weekNumber } = getYearAndWeekNumber(weekStart);
 
             if (isEditMode && slot) {
                 const slotDay = formData.days[0] || slot.day;
@@ -337,27 +362,50 @@ export function useCreateTimeSlot(
                 }
                 // Handle normal update (not future operations)
                 else {
-                    // Handle duration override for this week first
-                    const { year, weekNumber } =
-                        getYearAndWeekNumber(effectiveWeekStart);
-                    const existingOverride = slot.durationOverrides?.find(
-                        (override: { year: number; weekNumber: number }) =>
-                            override.year === year &&
-                            override.weekNumber === weekNumber
-                    );
+                    // Update existing slot
+                    // Only update base slot times if durationForThisWeekOnly is NOT checked
+                    // If checked, we'll only update the override, not the base slot
+                    if (!durationForThisWeekOnly) {
+                        await db.transact(
+                            db.tx.slots[slot.id].update({
+                                day: slotDay,
+                                startTime: slotStartTime,
+                                endTime: slotEndTime,
+                                disabled: disabledAlways,
+                            })
+                        );
+                    } else {
+                        // Only update day and disabled state, not times
+                        await db.transact(
+                            db.tx.slots[slot.id].update({
+                                day: slotDay,
+                                disabled: disabledAlways,
+                            })
+                        );
+                    }
+
+                    // Handle duration override for this week only
+                    const existingDurationOverride =
+                        slot.durationOverrides?.find(
+                            (override) =>
+                                override.year === year &&
+                                override.weekNumber === weekNumber
+                        );
 
                     if (durationForThisWeekOnly) {
-                        // Only create/update duration override for this week, don't update slot's default times
-                        if (existingOverride) {
+                        // Create or update duration override for viewed week
+                        if (existingDurationOverride) {
+                            // Update existing override
                             await db.transact(
                                 db.tx.slotDurationOverrides[
-                                    existingOverride.id
+                                    existingDurationOverride.id
                                 ].update({
                                     startTime: slotStartTime,
                                     endTime: slotEndTime,
                                 })
                             );
                         } else {
+                            // Create new override
                             const overrideId = id();
                             await db.transact(
                                 db.tx.slotDurationOverrides[overrideId]
@@ -373,53 +421,35 @@ export function useCreateTimeSlot(
                                     })
                             );
                         }
-                        // Still update day and disabled state, but not times
+                    } else if (existingDurationOverride) {
+                        // Delete duration override if unchecked
                         await db.transact(
-                            db.tx.slots[slot.id].update({
-                                day: slotDay,
-                                disabled: disabledAlways,
-                            })
+                            db.tx.slotDurationOverrides[
+                                existingDurationOverride.id
+                            ].delete()
                         );
-                    } else {
-                        // Update slot's default times (for all time)
-                        await db.transact(
-                            db.tx.slots[slot.id].update({
-                                day: slotDay,
-                                startTime: slotStartTime,
-                                endTime: slotEndTime,
-                                disabled: disabledAlways,
-                            })
-                        );
-                        // Remove duration override if it exists (since we're updating for all time)
-                        if (existingOverride) {
-                            await db.transact(
-                                db.tx.slotDurationOverrides[
-                                    existingOverride.id
-                                ].delete()
-                            );
-                        }
                     }
 
-                    // Handle disabled state for viewed week
+                    // Handle disabled state for current week
                     const existingDisabledSlot = slot.disabledSlots?.find(
                         (disabledSlot) => {
                             const disableDate = new Date(
                                 disabledSlot.disableDate
                             );
                             return (
-                                disableDate >= effectiveWeekStart &&
-                                disableDate < nextWeekStart
+                                disableDate >= currentWeekMonday &&
+                                disableDate < nextWeekMonday
                             );
                         }
                     );
 
                     if (disabledThisWeek && !existingDisabledSlot) {
-                        // Create disabled slot entry for viewed week
+                        // Create disabled slot entry for current week
                         const disabledSlotId = id();
                         await db.transact(
                             db.tx.disabledSlots[disabledSlotId]
                                 .update({
-                                    disableDate: effectiveWeekStart,
+                                    disableDate: currentWeekMonday,
                                 })
                                 .link({
                                     owner: user.id,
@@ -453,13 +483,13 @@ export function useCreateTimeSlot(
                             })
                     );
 
-                    // If disabled this week is checked, create disabled slot entry for viewed week
+                    // If disabled this week is checked, create disabled slot entry for current week
                     if (disabledThisWeek) {
                         const disabledSlotId = id();
                         await db.transact(
                             db.tx.disabledSlots[disabledSlotId]
                                 .update({
-                                    disableDate: effectiveWeekStart,
+                                    disableDate: currentWeekMonday,
                                 })
                                 .link({
                                     owner: user.id,
@@ -499,7 +529,6 @@ export function useCreateTimeSlot(
             setDisabledThisWeek(false);
             setDisableFuture(false);
             setEnableFuture(false);
-            setDurationForThisWeekOnly(false);
             setErrors({});
             return true;
         } catch (error) {
@@ -542,6 +571,7 @@ export function useCreateTimeSlot(
         disabledThisWeek,
         disableFuture,
         enableFuture,
+        durationForThisWeekOnly,
         handleDayToggle,
         handleTimeChange,
         handleTimetableChange,
@@ -549,7 +579,6 @@ export function useCreateTimeSlot(
         handleDisabledThisWeekChange,
         handleDisableFutureChange,
         handleEnableFutureChange,
-        durationForThisWeekOnly,
         handleDurationForThisWeekOnlyChange,
         handleSubmit,
     };
