@@ -210,3 +210,4 @@ export function useBrowserZoom(
         };
     }, []); // Empty dependency array - callbacks are accessed via refs
 }
+

@@ -8,6 +8,10 @@ An app for teachers to plan their lessons in certain time slots.
 
 ## Change Log
 
+### 2026/01/08
+
+-   UX: added sidebar state to local storage
+
 ### 2025/12/13
 
 -   UX: added a toast to the app to inform the user when the browser zoom level changes
