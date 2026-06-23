@@ -119,6 +119,78 @@ const rules = {
         },
         bind: dataBind,
     },
+    slotDurationOverrides: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    userSettings: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    profiles: {
+        allow: {
+            view: "isOwner",
+            create: "isAuthenticated",
+            update: "isOwner",
+            delete: "isOwner",
+        },
+        bind: adminBind,
+    },
+    clockSettings: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    timers: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    rotations: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    audioFiles: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
+    displaySessions: {
+        allow: {
+            view: "isOwner || isGuestOwner",
+            create: "isAuthenticated",
+            update: "isOwner || isGuestOwner",
+            delete: "isOwner || isGuestOwner",
+        },
+        bind: dataBind,
+    },
 } satisfies InstantRules;
 
 export default rules;

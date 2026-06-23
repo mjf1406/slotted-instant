@@ -11,7 +11,7 @@ import type { InstaQLEntity } from "@instantdb/react";
 import type { AppSchema } from "@/instant.schema";
 import { CreateClassModal } from "@/components/classes";
 import { getYearAndWeekNumber, getWeekStart } from "@/components/timetables/utils";
-import { useView } from "@/lib/view-context";
+import { useTimetableViewState } from "@/lib/timetable-view";
 import { Loader2 } from "lucide-react";
 import {
     SidebarGroup,
@@ -272,7 +272,8 @@ function NavClassesContent() {
     const user = db.useUser();
     const { selectedTimetable } = useTimetable();
     const { settings } = useSettings();
-    const { viewMode, currentWeekStart, currentDate: viewCurrentDate } = useView();
+    const { viewMode, currentWeekStart, currentDate: viewCurrentDate } =
+        useTimetableViewState();
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
     const { state } = useSidebar();
 

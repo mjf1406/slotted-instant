@@ -2,6 +2,7 @@
 
 "use client";
 
+import { Link } from "@tanstack/react-router";
 import {
     BadgeCheck,
     ChevronsUpDown,
@@ -33,14 +34,6 @@ import { GoogleSignInButton } from "@/components/_auth/GoogleSignInButton";
 function NavUserSignedIn() {
     const { isMobile } = useSidebar();
     const user = db.useUser();
-
-    const handleSettingsClick = () => {
-        const params = new URLSearchParams(window.location.search);
-        params.set("page", "settings");
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.history.pushState({}, "", newUrl);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-    };
     const { data, isLoading } = db.useQuery({
         profiles: {
             $: {
@@ -161,9 +154,11 @@ function NavUserSignedIn() {
                                 <CreditCard />
                                 Billing
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleSettingsClick}>
-                                <Settings />
-                                Settings
+                            <DropdownMenuItem asChild>
+                                <Link to="/settings">
+                                    <Settings />
+                                    Settings
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />

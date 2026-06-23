@@ -89,6 +89,50 @@ export type SlotDurationOverride = InstaQLEntity<
     }
 >;
 
+export type ClockSettings = InstaQLEntity<
+    AppSchema,
+    "clockSettings",
+    { owner: Record<string, never> }
+>;
+
+export type Timer = InstaQLEntity<
+    AppSchema,
+    "timers",
+    {
+        owner: Record<string, never>;
+        nextTimer: Record<string, never>;
+        previousTimers: Record<string, never>;
+    }
+>;
+
+export type Rotation = InstaQLEntity<
+    AppSchema,
+    "rotations",
+    { owner: Record<string, never> }
+>;
+
+export type AudioFile = InstaQLEntity<
+    AppSchema,
+    "audioFiles",
+    {
+        owner: Record<string, never>;
+        file: Record<string, never>;
+    }
+>;
+
+export type DisplaySession = InstaQLEntity<
+    AppSchema,
+    "displaySessions",
+    {
+        owner: Record<string, never>;
+        pushedSlotClass: {
+            class: Record<string, never>;
+            slot: Record<string, never>;
+            timetable: Record<string, never>;
+        };
+    }
+>;
+
 // User Role type
 export type UserRole = "teacher" | "admin";
 

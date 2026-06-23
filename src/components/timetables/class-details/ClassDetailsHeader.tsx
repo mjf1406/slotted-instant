@@ -6,6 +6,7 @@ import React from "react";
 import { X, Edit, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon-picker";
+import { PushToDisplayButton } from "@/components/display/PushToDisplayButton";
 
 interface ClassDetailsHeaderProps {
     classDetails: {
@@ -21,6 +22,8 @@ interface ClassDetailsHeaderProps {
     onClose: () => void;
     showEditButton: boolean;
     showShortcuts?: boolean;
+    pushToDisplaySlotClassId?: string;
+    pushSlotEndTime?: string;
 }
 
 const ClassDetailsHeader: React.FC<ClassDetailsHeaderProps> = ({
@@ -32,6 +35,8 @@ const ClassDetailsHeader: React.FC<ClassDetailsHeaderProps> = ({
     onClose,
     showEditButton,
     showShortcuts = false,
+    pushToDisplaySlotClassId,
+    pushSlotEndTime,
 }) => {
     const isMac = typeof navigator !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0;
     const modKey = isMac ? "⌘" : "Ctrl";
@@ -69,6 +74,12 @@ const ClassDetailsHeader: React.FC<ClassDetailsHeaderProps> = ({
                             <Check className="h-6 w-6" />
                             <span>All done!</span>
                         </div>
+                    )}
+                    {!isEditMode && pushToDisplaySlotClassId && (
+                        <PushToDisplayButton
+                            slotClassId={pushToDisplaySlotClassId}
+                            slotEndTime={pushSlotEndTime}
+                        />
                     )}
                     {!isEditMode && showEditButton && (
                         <Button

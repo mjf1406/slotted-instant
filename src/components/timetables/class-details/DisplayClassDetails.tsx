@@ -209,6 +209,8 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                         onClose={onClose}
                         showEditButton={!!onSave}
                         showShortcuts={true}
+                        pushToDisplaySlotClassId={slotClass.id}
+                        pushSlotEndTime={slotClass.slot?.endTime}
                     />
                     <ScrollArea className="grow">
                         <div className="p-6">

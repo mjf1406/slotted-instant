@@ -2,11 +2,13 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Link, useMatchRoute } from "@tanstack/react-router";
+import { Timer } from "lucide-react";
 import { ModeToggle } from "@/components/_themes/theme-toggle";
 import { CreateTimeSlotDialog } from "@/components/timeslots";
 import { CreateClassModal } from "@/components/classes";
 import { useTimetable } from "@/lib/timetable-context";
+import { useTimerSheet } from "@/lib/timer-sheet-context";
 import { db } from "@/lib/db";
 import {
     Breadcrumb,
@@ -16,6 +18,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -32,24 +35,27 @@ function TimetableBreadcrumbContent() {
     return <>{selectedTimetable?.name || "Select Timetable"}</>;
 }
 
+const PAGE_TITLES: Record<string, string> = {
+    "/display": "Classroom display",
+    "/timers": "Timers",
+    "/rotations": "Rotations",
+    "/audio": "Audio",
+    "/settings": "Settings",
+};
+
 export function AppHeader() {
-    const [isSettingsPage, setIsSettingsPage] = useState(false);
+    const matchRoute = useMatchRoute();
+    const { toggle } = useTimerSheet();
 
-    useEffect(() => {
-        const checkParams = () => {
-            if (typeof window !== "undefined") {
-                const params = new URLSearchParams(window.location.search);
-                setIsSettingsPage(params.get("page") === "settings");
-            }
-        };
+    const isSettingsPage = !!matchRoute({ to: "/settings", fuzzy: false });
+    const isTimetablePage = !!matchRoute({ to: "/t/$timetableId", fuzzy: false });
 
-        checkParams();
-        window.addEventListener("popstate", checkParams);
-        return () => window.removeEventListener("popstate", checkParams);
-    }, []);
+    const currentPageTitle = Object.entries(PAGE_TITLES).find(([path]) =>
+        matchRoute({ to: path, fuzzy: false })
+    )?.[1];
 
     return (
-        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 bg-background border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
                 <db.SignedIn>
@@ -59,15 +65,33 @@ export function AppHeader() {
                     />
                     <Breadcrumb>
                         <BreadcrumbList>
-                            {isSettingsPage ? (
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>Settings</BreadcrumbPage>
-                                </BreadcrumbItem>
+                            {isSettingsPage || currentPageTitle ? (
+                                <>
+                                    {!isSettingsPage && isTimetablePage ? null : (
+                                        <>
+                                            <BreadcrumbItem className="hidden md:block">
+                                                <BreadcrumbLink asChild>
+                                                    <Link to="/">Timetables</Link>
+                                                </BreadcrumbLink>
+                                            </BreadcrumbItem>
+                                            <BreadcrumbSeparator className="hidden md:block" />
+                                        </>
+                                    )}
+                                    <BreadcrumbItem>
+                                        <BreadcrumbPage>
+                                            {isSettingsPage
+                                                ? "Settings"
+                                                : currentPageTitle ?? (
+                                                      <TimetableBreadcrumb />
+                                                  )}
+                                        </BreadcrumbPage>
+                                    </BreadcrumbItem>
+                                </>
                             ) : (
                                 <>
                                     <BreadcrumbItem className="hidden md:block">
-                                        <BreadcrumbLink href="#">
-                                            Timetables
+                                        <BreadcrumbLink asChild>
+                                            <Link to="/">Timetables</Link>
                                         </BreadcrumbLink>
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator className="hidden md:block" />
@@ -83,6 +107,17 @@ export function AppHeader() {
                 </db.SignedIn>
             </div>
             <div className="ml-auto flex items-center gap-2 px-4">
+                <db.SignedIn>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggle}
+                        title="Open timer controls (T)"
+                    >
+                        <Timer className="size-4" />
+                        <span className="hidden sm:inline">Timer</span>
+                    </Button>
+                </db.SignedIn>
                 <CreateClassModal />
                 <CreateTimeSlotDialog />
                 <ModeToggle />
@@ -90,4 +125,3 @@ export function AppHeader() {
         </header>
     );
 }
-

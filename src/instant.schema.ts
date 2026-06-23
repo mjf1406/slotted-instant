@@ -89,6 +89,63 @@ const _schema = i.schema({
             zoomLevel: i.number().indexed().optional(), // Zoom for general UI (0.5 to 2.0, default 1.0)
             displayZoomLevel: i.number().indexed().optional(), // Zoom for display modal (0.5 to 2.0, default 1.0)
         }),
+        // ----------------------
+        //   ClassClock entities
+        // ----------------------
+        clockSettings: i.entity({
+            clockSize: i.number(),
+            dateSize: i.number(),
+            clockBgColor: i.string(),
+            rotationBgColor: i.string(),
+            transitionBgColor: i.string(),
+            timerBgColor: i.string(),
+            dateLocation: i.string(),
+            timeFormat: i.string(), // 12h | 24h
+            currentTimeSize: i.number().optional(),
+            endTimeSize: i.number().optional(),
+            timerTitleSize: i.number().optional(),
+            timerEndBehavior: i.string().optional(), // countUp | hold | return
+            overtimeAutoDismissSeconds: i.number().optional(),
+            bgTransition: i.string().optional(),
+            audioCues: i.json().optional(),
+            sidebarDefaultOpen: i.boolean().optional(),
+        }),
+        timers: i.entity({
+            name: i.string().indexed(),
+            durationSeconds: i.number(),
+            bgColor: i.string(),
+            endTime: i.string().optional(),
+            bgTransition: i.string().optional(),
+            audioCues: i.json().optional(),
+        }),
+        rotations: i.entity({
+            name: i.string().indexed(),
+            rotationsDurationSeconds: i.number(),
+            rotationsBgColor: i.string(),
+            transitionDuration: i.string(),
+            transitionBgColor: i.string(),
+            numberOfRotations: i.number(),
+            finalTransition: i.boolean().optional(),
+            bgTransition: i.string().optional(),
+            audioCues: i.json().optional(),
+            workCues: i.json().optional(),
+            transitionCues: i.json().optional(),
+        }),
+        audioFiles: i.entity({
+            name: i.string().indexed(),
+            contentType: i.string(),
+            size: i.number(),
+            isBuiltin: i.boolean().optional(),
+            builtinKey: i.string().optional().indexed(),
+        }),
+        displaySessions: i.entity({
+            sessionJson: i.json().optional(),
+            endsAt: i.number().optional(),
+            paused: i.boolean(),
+            pausedRemainingMs: i.number().optional(),
+            pushedUntil: i.number().optional().indexed(),
+            updatedAt: i.number().indexed(),
+        }),
     },
     links: {
         // ----------------------
@@ -326,6 +383,108 @@ const _schema = i.schema({
                 on: "$users",
                 has: "one",
                 label: "userSettings",
+            },
+        },
+        clockSettingsOwners: {
+            forward: {
+                on: "clockSettings",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "one",
+                label: "clockSettings",
+            },
+        },
+        timersOwners: {
+            forward: {
+                on: "timers",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerTimers",
+            },
+        },
+        timersNextTimer: {
+            forward: {
+                on: "timers",
+                has: "one",
+                label: "nextTimer",
+            },
+            reverse: {
+                on: "timers",
+                has: "many",
+                label: "previousTimers",
+            },
+        },
+        rotationsOwners: {
+            forward: {
+                on: "rotations",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerRotations",
+            },
+        },
+        audioFilesOwners: {
+            forward: {
+                on: "audioFiles",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "many",
+                label: "ownerAudioFiles",
+            },
+        },
+        audioFilesStorage: {
+            forward: {
+                on: "audioFiles",
+                has: "one",
+                label: "file",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$files",
+                has: "one",
+                label: "audioFile",
+            },
+        },
+        displaySessionsOwners: {
+            forward: {
+                on: "displaySessions",
+                has: "one",
+                label: "owner",
+                onDelete: "cascade",
+            },
+            reverse: {
+                on: "$users",
+                has: "one",
+                label: "displaySession",
+            },
+        },
+        displaySessionsPushedSlotClass: {
+            forward: {
+                on: "displaySessions",
+                has: "one",
+                label: "pushedSlotClass",
+            },
+            reverse: {
+                on: "slotClasses",
+                has: "many",
+                label: "displaySessions",
             },
         },
     },

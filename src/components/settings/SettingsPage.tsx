@@ -18,9 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useCallback, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { ClockSettingsSection } from "@/components/clock/ClockSettingsSection";
 
 export function SettingsPage() {
+    const navigate = useNavigate();
     const { settings, isLoading, updateSettings } = useSettings();
     const [weekStartDay, setWeekStartDay] = useState<WeekStartDay>(
         settings.weekStartDay
@@ -93,14 +96,8 @@ export function SettingsPage() {
     };
 
     const handleBack = useCallback(() => {
-        const params = new URLSearchParams(window.location.search);
-        params.delete("page");
-        const newUrl = `${window.location.pathname}${
-            params.toString() ? `?${params.toString()}` : ""
-        }`;
-        window.history.pushState({}, "", newUrl);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-    }, []);
+        void navigate({ to: "/" });
+    }, [navigate]);
 
     if (isLoading) {
         return (
@@ -319,6 +316,10 @@ export function SettingsPage() {
                         </span>
                     )}
                 </div>
+
+                <Separator />
+
+                <ClockSettingsSection />
             </div>
         </div>
     );
