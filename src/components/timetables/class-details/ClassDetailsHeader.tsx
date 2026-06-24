@@ -79,6 +79,7 @@ const ClassDetailsHeader: React.FC<ClassDetailsHeaderProps> = ({
                         <PushToDisplayButton
                             slotClassId={pushToDisplaySlotClassId}
                             slotEndTime={pushSlotEndTime}
+                            className="text-foreground bg-background!"
                         />
                     )}
                     {!isEditMode && showEditButton && (

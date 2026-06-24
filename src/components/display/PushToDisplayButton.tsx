@@ -170,6 +170,7 @@ interface PushToDisplayButtonProps {
     slotEndTime?: string;
     variant?: "default" | "outline" | "ghost";
     size?: "default" | "sm" | "icon-sm";
+    className?: string;
 }
 
 export function PushToDisplayButton({
@@ -177,6 +178,7 @@ export function PushToDisplayButton({
     slotEndTime,
     variant = "outline",
     size = "sm",
+    className,
 }: PushToDisplayButtonProps) {
     const [open, setOpen] = useState(false);
 
@@ -185,6 +187,7 @@ export function PushToDisplayButton({
             <Button
                 variant={variant}
                 size={size}
+                className={className}
                 onClick={() => setOpen(true)}
             >
                 <Monitor />

@@ -152,6 +152,7 @@ export function DisplayPage() {
         userId,
         isRunner: true,
         compact: true,
+        fillWidth: true,
         timeFormat: settings?.timeFormat ?? DEFAULT_CLOCK_SETTINGS.timeFormat,
         clockSize: settings?.clockSize ?? DEFAULT_CLOCK_SETTINGS.clockSize,
         dateSize: settings?.dateSize ?? DEFAULT_CLOCK_SETTINGS.dateSize,

@@ -16,6 +16,7 @@ import {
     PopoverContent,
 } from "@/components/ui/popover";
 import { AnimatedBackground } from "@/components/clock/AnimatedBackground";
+import { FitText } from "@/components/clock/FitText";
 import { YouTubeOverlay } from "@/components/clock/YouTubeOverlay";
 import { cn } from "@/lib/utils";
 import {
@@ -69,6 +70,7 @@ interface ClockProps {
     userId: string;
     isRunner?: boolean;
     compact?: boolean;
+    fillWidth?: boolean;
     timeFormat?: string;
     clockSize?: number;
     dateSize?: number;
@@ -107,6 +109,15 @@ function normalizeDateLocation(location: string): string {
     return location;
 }
 
+const LONGEST_DATE = "Wednesday, September 30, 0000";
+const LONGEST_TIME_24H = "23:59:59";
+const LONGEST_TIME_12H = "11:59:59 PM";
+const LONGEST_COUNTDOWN = "-99:59:59";
+
+function longestTimeBenchmark(timeFormat: string): string {
+    return timeFormat === "12h" ? LONGEST_TIME_12H : LONGEST_TIME_24H;
+}
+
 const DURATION_PRESETS = [
     { label: "10s", seconds: 10 },
     { label: "30s", seconds: 30 },
@@ -132,8 +143,10 @@ const ADJUST_BELOW_ZERO_MESSAGE = "Timer cannot go below zero.";
 
 function DurationPresetButtons({
     onSelect,
+    largeControls = false,
 }: {
     onSelect: (seconds: number) => void;
+    largeControls?: boolean;
 }) {
     return (
         <div className="w-full min-w-0 px-4">
@@ -143,8 +156,11 @@ function DurationPresetButtons({
                         key={preset.label}
                         type="button"
                         variant="secondary"
-                        size="sm"
-                        className="min-w-10 rounded-lg px-2"
+                        size={largeControls ? "lg" : "sm"}
+                        className={cn(
+                            "rounded-lg",
+                            largeControls ? "min-w-14 px-4" : "min-w-10 px-2"
+                        )}
                         onClick={() => onSelect(preset.seconds)}
                     >
                         {preset.label}
@@ -159,10 +175,12 @@ function QuickPickList<T extends { id: string; name: string }>({
     title,
     items,
     onSelect,
+    largeControls = false,
 }: {
     title: string;
     items: T[] | undefined;
     onSelect: (item: T) => void;
+    largeControls?: boolean;
 }) {
     return (
         <div className="w-full min-w-0 px-4">
@@ -180,7 +198,7 @@ function QuickPickList<T extends { id: string; name: string }>({
                             key={item.id}
                             type="button"
                             variant="secondary"
-                            size="sm"
+                            size={largeControls ? "lg" : "sm"}
                             onClick={() => onSelect(item)}
                         >
                             {item.name}
@@ -352,6 +370,7 @@ export function Clock({
     userId,
     isRunner = false,
     compact = false,
+    fillWidth = false,
     timeFormat = "24h",
     clockSize = 72,
     dateSize = 24,
@@ -772,13 +791,81 @@ export function Clock({
         void ensureDisplaySession(userId);
     }, [userId]);
 
-    const dateElement = (
+    const dateElement = fillWidth ? (
+        <FitText
+            benchmark={LONGEST_DATE}
+            className="font-mono tabular-nums"
+        >
+            {formatDate(now)}
+        </FitText>
+    ) : (
         <p
             className="font-mono tabular-nums"
             style={{ fontSize: `${dateSize}px` }}
         >
             {formatDate(now)}
         </p>
+    );
+
+    const wallTimeElement = fillWidth ? (
+        <FitText
+            benchmark={longestTimeBenchmark(timeFormat)}
+            className="font-mono tabular-nums leading-none tracking-tight select-none"
+        >
+            {formatWallTime(now, timeFormat)}
+        </FitText>
+    ) : (
+        <p
+            className="font-mono tabular-nums"
+            style={{ fontSize: `${currentTimeSize}px` }}
+        >
+            {formatWallTime(now, timeFormat)}
+        </p>
+    );
+
+    const countdownElement = fillWidth ? (
+        <FitText
+            benchmark={LONGEST_COUNTDOWN}
+            className="font-mono tabular-nums leading-none tracking-tight select-none"
+            style={{
+                color: remaining < 0 ? overtimeTextColor : undefined,
+            }}
+        >
+            {formatCountdown(remaining)}
+        </FitText>
+    ) : (
+        <time
+            className={cn(
+                "font-mono tabular-nums leading-none tracking-tight select-none"
+            )}
+            style={{
+                fontSize: `${clockSize}px`,
+                color: remaining < 0 ? overtimeTextColor : undefined,
+            }}
+        >
+            {formatCountdown(remaining)}
+        </time>
+    );
+
+    const idleWallClockElement = fillWidth ? (
+        <FitText
+            benchmark={longestTimeBenchmark(timeFormat)}
+            className="font-mono tabular-nums leading-none tracking-tight select-none"
+        >
+            <time dateTime={now.toISOString()}>
+                {formatTime(now, timeFormat)}
+            </time>
+        </FitText>
+    ) : (
+        <time
+            className={cn(
+                "font-mono tabular-nums leading-none tracking-tight select-none"
+            )}
+            style={{ fontSize: `${clockSize}px` }}
+            dateTime={now.toISOString()}
+        >
+            {formatTime(now, timeFormat)}
+        </time>
     );
 
     const activeSegment = session ? getCurrentSegment(session) : null;
@@ -790,35 +877,20 @@ export function Clock({
             ? getRotationEndTimes(session, endsAt)
             : [];
 
-    const activeMainContent = session && activeSegment && (
+    const activeVisualContent = session && activeSegment && (
         <>
             <div className="flex w-full flex-col items-center gap-1">
                 {position === "above" && dateElement}
-                <p
-                    className="font-mono tabular-nums"
-                    style={{ fontSize: `${currentTimeSize}px` }}
-                >
-                    {formatWallTime(now, timeFormat)}
-                </p>
+                {wallTimeElement}
             </div>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex w-full flex-col items-center gap-1">
                 <p
                     className="font-medium"
                     style={{ fontSize: `${timerTitleSize}px` }}
                 >
                     {activeSegment.label}
                 </p>
-                <time
-                    className={cn(
-                        "font-mono tabular-nums leading-none tracking-tight select-none"
-                    )}
-                    style={{
-                        fontSize: `${clockSize}px`,
-                        color: remaining < 0 ? overtimeTextColor : undefined,
-                    }}
-                >
-                    {formatCountdown(remaining)}
-                </time>
+                {countdownElement}
                 {position === "bottom" && dateElement}
             </div>
             <div
@@ -861,102 +933,140 @@ export function Clock({
                     </div>
                 )}
             </div>
-            {!compact && (
-                <>
-                    <ActiveTransportControls
-                        session={session}
-                        paused={paused}
-                        remaining={remaining}
-                        onAdjust={adjustTime}
-                        onPauseToggle={() => void handlePauseToggle()}
-                        onSkip={() => void skipSegment()}
-                        onStop={() => void stopSession(true)}
-                    />
-                    <Popover
-                        open={queuePopoverOpen}
-                        onOpenChange={setQueuePopoverOpen}
-                    >
-                        <PopoverAnchor asChild>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setQueuePopoverOpen((o) => !o)}
-                            >
-                                <ListPlus />
-                                Queue timer
-                            </Button>
-                        </PopoverAnchor>
-                        <PopoverContent className="w-72 p-3" side="top">
-                            <p className="mb-2 text-sm font-medium">
-                                Play after current segment
-                            </p>
-                            {timers === undefined ? (
-                                <p className="text-sm opacity-70">Loading...</p>
-                            ) : timers.length === 0 ? (
-                                <p className="text-sm opacity-70">
-                                    No saved timers
-                                </p>
-                            ) : (
-                                <div className="flex flex-wrap gap-2">
-                                    {timers.map((timer) => (
-                                        <Button
-                                            key={timer.id}
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() =>
-                                                void handleQueueTimer(timer)
-                                            }
-                                        >
-                                            {timer.name}
-                                        </Button>
-                                    ))}
-                                </div>
-                            )}
-                        </PopoverContent>
-                    </Popover>
-                </>
-            )}
         </>
     );
 
-    const idleMainContent = !session && !compact && (
+    const activeTransportContent = session && activeSegment && !compact && (
         <>
-            <div className="flex flex-col items-center gap-1">
-                {position === "above" && dateElement}
-                <time
-                    className={cn(
-                        "font-mono tabular-nums leading-none tracking-tight select-none"
+            <ActiveTransportControls
+                session={session}
+                paused={paused}
+                remaining={remaining}
+                onAdjust={adjustTime}
+                onPauseToggle={() => void handlePauseToggle()}
+                onSkip={() => void skipSegment()}
+                onStop={() => void stopSession(true)}
+            />
+            <Popover
+                open={queuePopoverOpen}
+                onOpenChange={setQueuePopoverOpen}
+            >
+                <PopoverAnchor asChild>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setQueuePopoverOpen((o) => !o)}
+                    >
+                        <ListPlus />
+                        Queue timer
+                    </Button>
+                </PopoverAnchor>
+                <PopoverContent className="w-72 p-3" side="top">
+                    <p className="mb-2 text-sm font-medium">
+                        Play after current segment
+                    </p>
+                    {timers === undefined ? (
+                        <p className="text-sm opacity-70">Loading...</p>
+                    ) : timers.length === 0 ? (
+                        <p className="text-sm opacity-70">
+                            No saved timers
+                        </p>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {timers.map((timer) => (
+                                <Button
+                                    key={timer.id}
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() =>
+                                        void handleQueueTimer(timer)
+                                    }
+                                >
+                                    {timer.name}
+                                </Button>
+                            ))}
+                        </div>
                     )}
-                    style={{ fontSize: `${clockSize}px` }}
-                    dateTime={now.toISOString()}
-                >
-                    {formatTime(now, timeFormat)}
-                </time>
-                {position === "bottom" && dateElement}
+                </PopoverContent>
+            </Popover>
+        </>
+    );
+
+    const activeMainContent = session && activeSegment && (
+        fillWidth ? (
+            <div className="flex h-full w-full items-center justify-center overflow-y-auto px-2 py-2">
+                <div className="flex w-full flex-col items-center gap-3">
+                    {activeVisualContent}
+                    {activeTransportContent}
+                </div>
             </div>
-            <DurationPresetButtons onSelect={handleQuickPreset} />
+        ) : (
+            <>
+                {activeVisualContent}
+                {activeTransportContent}
+            </>
+        )
+    );
+
+    const idleClockCluster = (
+        <div className="flex w-full flex-col items-center gap-1">
+            {position === "above" && dateElement}
+            {idleWallClockElement}
+            {position === "bottom" && dateElement}
+        </div>
+    );
+
+    const idleControls = (
+        <>
+            <DurationPresetButtons
+                onSelect={handleQuickPreset}
+                largeControls={fillWidth}
+            />
             <div className="grid w-full gap-3 sm:grid-cols-2">
                 <QuickPickList
                     title="Timers"
                     items={timers}
                     onSelect={handleTimerSelect}
+                    largeControls={fillWidth}
                 />
                 <QuickPickList
                     title="Rotations"
                     items={rotations}
                     onSelect={handleRotationSelect}
+                    largeControls={fillWidth}
                 />
             </div>
         </>
+    );
+
+    const idleMainContent = !session && (
+        fillWidth ? (
+            <div className="flex h-full w-full items-center justify-center overflow-y-auto px-2 py-2">
+                <div className="flex w-full flex-col items-center gap-3">
+                    {idleClockCluster}
+                    {idleControls}
+                </div>
+            </div>
+        ) : (
+            <>
+                {idleClockCluster}
+                {idleControls}
+            </>
+        )
     );
 
     const activeVideo =
         session && activeSegment ? activeSegment.audioCues.video : null;
 
     return (
-        <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden p-2">
+        <div
+            className={cn(
+                "relative flex h-full w-full flex-col items-center overflow-hidden p-2",
+                !fillWidth && "justify-center"
+            )}
+        >
             <AnimatedBackground
                 color={currentBgColor}
                 transition={activeBgTransition}
@@ -985,7 +1095,12 @@ export function Clock({
                 </div>
             )}
             <div
-                className="relative z-10 flex w-full max-w-2xl flex-col items-center gap-3"
+                className={cn(
+                    "relative z-10",
+                    fillWidth
+                        ? "h-full w-full"
+                        : "flex w-full max-w-2xl flex-col items-center gap-3"
+                )}
                 style={{ color: textColor }}
             >
                 {activeMainContent}
