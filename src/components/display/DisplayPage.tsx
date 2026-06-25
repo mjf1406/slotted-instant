@@ -152,6 +152,7 @@ export function DisplayPage() {
         userId,
         isRunner: true,
         compact: true,
+        showTimeAdjust: true,
         fillWidth: true,
         timeFormat: settings?.timeFormat ?? DEFAULT_CLOCK_SETTINGS.timeFormat,
         clockSize: settings?.clockSize ?? DEFAULT_CLOCK_SETTINGS.clockSize,
@@ -201,36 +202,46 @@ export function DisplayPage() {
     return (
         <div
             ref={containerRef}
-            className="flex h-[calc(100vh-4rem)] w-full flex-col bg-background"
+            className="relative flex h-full min-h-0 w-full flex-col bg-background"
         >
-            <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
-                <div className="flex items-center gap-2">
+            <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
+                <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() =>
                             setOrientation((o) =>
                                 o === "horizontal" ? "vertical" : "horizontal"
                             )
                         }
+                        title="Flip split"
+                        aria-label="Flip split"
                     >
                         {orientation === "horizontal" ? (
                             <PanelTop />
                         ) : (
                             <PanelLeft />
                         )}
-                        Flip split
                     </Button>
-                    {statusLabel ? (
-                        <span className="text-xs text-muted-foreground">
-                            {statusLabel}
-                        </span>
-                    ) : null}
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => void toggleFullscreen()}
+                        title={
+                            isFullscreen ? "Exit fullscreen" : "Fullscreen"
+                        }
+                        aria-label={
+                            isFullscreen ? "Exit fullscreen" : "Fullscreen"
+                        }
+                    >
+                        {isFullscreen ? <Minimize /> : <Maximize />}
+                    </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => void toggleFullscreen()}>
-                    {isFullscreen ? <Minimize /> : <Maximize />}
-                    {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                </Button>
+                {statusLabel ? (
+                    <span className="text-xs text-muted-foreground">
+                        {statusLabel}
+                    </span>
+                ) : null}
             </div>
 
             <div

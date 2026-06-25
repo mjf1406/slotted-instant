@@ -70,6 +70,7 @@ interface ClockProps {
     userId: string;
     isRunner?: boolean;
     compact?: boolean;
+    showTimeAdjust?: boolean;
     fillWidth?: boolean;
     timeFormat?: string;
     clockSize?: number;
@@ -268,6 +269,103 @@ function TimeAdjustButton({
     );
 }
 
+function DisplayTransportControls({
+    session,
+    paused,
+    onPauseToggle,
+    onSkip,
+    onStop,
+}: {
+    session: ActiveSession;
+    paused: boolean;
+    onPauseToggle: () => void;
+    onSkip: () => void;
+    onStop: () => void;
+}) {
+    const canSkip = session.segments.length > 1;
+
+    return (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onPauseToggle}
+            >
+                {paused ? <Play /> : <Pause />}
+                {paused ? "Resume" : "Pause"}
+            </Button>
+            {canSkip && (
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={onSkip}
+                >
+                    <SkipForward />
+                    Skip
+                </Button>
+            )}
+            <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onStop}
+            >
+                <Square />
+                Stop
+            </Button>
+        </div>
+    );
+}
+
+function TimeAdjustControls({
+    remaining,
+    onAdjust,
+}: {
+    remaining: number;
+    onAdjust: (deltaSeconds: number) => void;
+}) {
+    const [adjustErrorKey, setAdjustErrorKey] = useState<string | null>(null);
+
+    return (
+        <>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                {[...TIME_ADJUSTMENTS].reverse().map((preset) => (
+                    <TimeAdjustButton
+                        key={`minus-${preset.label}`}
+                        buttonKey={`minus-${preset.label}`}
+                        deltaSeconds={-preset.seconds}
+                        remaining={remaining}
+                        errorKey={adjustErrorKey}
+                        onError={setAdjustErrorKey}
+                        onAdjust={onAdjust}
+                    >
+                        <Minus />
+                        {preset.label}
+                    </TimeAdjustButton>
+                ))}
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                {TIME_ADJUSTMENTS.map((preset) => (
+                    <TimeAdjustButton
+                        key={`plus-${preset.label}`}
+                        buttonKey={`plus-${preset.label}`}
+                        deltaSeconds={preset.seconds}
+                        remaining={remaining}
+                        errorKey={adjustErrorKey}
+                        onError={setAdjustErrorKey}
+                        onAdjust={onAdjust}
+                    >
+                        <Plus />
+                        {preset.label}
+                    </TimeAdjustButton>
+                ))}
+            </div>
+        </>
+    );
+}
+
 function ActiveTransportControls({
     session,
     paused,
@@ -286,26 +384,10 @@ function ActiveTransportControls({
     onStop: () => void;
 }) {
     const canSkip = session.segments.length > 1;
-    const [adjustErrorKey, setAdjustErrorKey] = useState<string | null>(null);
 
     return (
         <div className="flex w-full min-w-0 flex-col items-center gap-3 px-4">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-                {[...TIME_ADJUSTMENTS].reverse().map((preset) => (
-                    <TimeAdjustButton
-                        key={`minus-${preset.label}`}
-                        buttonKey={`minus-${preset.label}`}
-                        deltaSeconds={-preset.seconds}
-                        remaining={remaining}
-                        errorKey={adjustErrorKey}
-                        onError={setAdjustErrorKey}
-                        onAdjust={onAdjust}
-                    >
-                        <Minus />
-                        {preset.label}
-                    </TimeAdjustButton>
-                ))}
-            </div>
+            <TimeAdjustControls remaining={remaining} onAdjust={onAdjust} />
             <div className="flex flex-wrap items-center justify-center gap-2">
                 <Button
                     type="button"
@@ -346,22 +428,6 @@ function ActiveTransportControls({
                     Reset
                 </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-                {TIME_ADJUSTMENTS.map((preset) => (
-                    <TimeAdjustButton
-                        key={`plus-${preset.label}`}
-                        buttonKey={`plus-${preset.label}`}
-                        deltaSeconds={preset.seconds}
-                        remaining={remaining}
-                        errorKey={adjustErrorKey}
-                        onError={setAdjustErrorKey}
-                        onAdjust={onAdjust}
-                    >
-                        <Plus />
-                        {preset.label}
-                    </TimeAdjustButton>
-                ))}
-            </div>
         </div>
     );
 }
@@ -370,6 +436,7 @@ export function Clock({
     userId,
     isRunner = false,
     compact = false,
+    showTimeAdjust = false,
     fillWidth = false,
     timeFormat = "24h",
     clockSize = 72,
@@ -791,7 +858,7 @@ export function Clock({
         void ensureDisplaySession(userId);
     }, [userId]);
 
-    const dateElement = fillWidth ? (
+    const dateElement = fillWidth && !session ? (
         <FitText
             benchmark={LONGEST_DATE}
             className="font-mono tabular-nums"
@@ -807,10 +874,13 @@ export function Clock({
         </p>
     );
 
+    const activeWallTimeMaxSize = Math.max(currentTimeSize * 2, 40);
+
     const wallTimeElement = fillWidth ? (
         <FitText
             benchmark={longestTimeBenchmark(timeFormat)}
             className="font-mono tabular-nums leading-none tracking-tight select-none"
+            maxFontSize={activeWallTimeMaxSize}
         >
             {formatWallTime(now, timeFormat)}
         </FitText>
@@ -994,18 +1064,39 @@ export function Clock({
         </>
     );
 
+    const activeTimeAdjustContent = session &&
+        activeSegment &&
+        showTimeAdjust &&
+        compact && (
+            <div className="flex w-full min-w-0 flex-col items-center gap-3 px-4">
+                <TimeAdjustControls
+                    remaining={remaining}
+                    onAdjust={adjustTime}
+                />
+                <DisplayTransportControls
+                    session={session}
+                    paused={paused}
+                    onPauseToggle={() => void handlePauseToggle()}
+                    onSkip={() => void skipSegment()}
+                    onStop={() => void stopSession(true)}
+                />
+            </div>
+        );
+
     const activeMainContent = session && activeSegment && (
         fillWidth ? (
             <div className="flex h-full w-full items-center justify-center overflow-y-auto px-2 py-2">
                 <div className="flex w-full flex-col items-center gap-3">
                     {activeVisualContent}
                     {activeTransportContent}
+                    {activeTimeAdjustContent}
                 </div>
             </div>
         ) : (
             <>
                 {activeVisualContent}
                 {activeTransportContent}
+                {activeTimeAdjustContent}
             </>
         )
     );

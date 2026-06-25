@@ -2,7 +2,8 @@
 
 "use client";
 
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createRootRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "@/components/_themes/theme-provider";
@@ -13,9 +14,47 @@ import { TimerSheet } from "@/components/clock/TimerSheet";
 import { TimetableProvider } from "@/lib/timetable-context";
 import { SettingsProvider } from "@/lib/settings-context";
 import { TimerSheetProvider } from "@/lib/timer-sheet-context";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+    SidebarInset,
+    SidebarProvider,
+    useSidebar,
+} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { db } from "@/lib/db";
+
+function AppShellContent({ signedIn }: { signedIn: boolean }) {
+    const matchRoute = useMatchRoute();
+    const isDisplayRoute = !!matchRoute({ to: "/display", fuzzy: false });
+    const { setOpen } = useSidebar();
+
+    useEffect(() => {
+        if (isDisplayRoute) {
+            setOpen(false);
+        }
+    }, [isDisplayRoute, setOpen]);
+
+    return (
+        <>
+            <AppSidebar />
+            <SidebarInset
+                className={cn(isDisplayRoute && "min-h-svh")}
+            >
+                {!isDisplayRoute && <AppHeader />}
+                {signedIn ? (
+                    <Outlet />
+                ) : (
+                    <div className="flex flex-1 items-center justify-center p-8">
+                        <p className="text-muted-foreground">
+                            Please sign in to continue
+                        </p>
+                    </div>
+                )}
+            </SidebarInset>
+            {signedIn ? <TimerSheet /> : null}
+        </>
+    );
+}
 
 function AppShell() {
     return (
@@ -25,26 +64,13 @@ function AppShell() {
                 <db.SignedIn>
                     <SettingsProvider>
                         <TimetableProvider>
-                            <AppSidebar />
-                            <SidebarInset>
-                                <AppHeader />
-                                <Outlet />
-                            </SidebarInset>
-                            <TimerSheet />
+                            <AppShellContent signedIn />
                         </TimetableProvider>
                     </SettingsProvider>
                 </db.SignedIn>
                 <db.SignedOut>
                     <SettingsProvider>
-                        <AppSidebar />
-                        <SidebarInset>
-                            <AppHeader />
-                            <div className="flex flex-1 items-center justify-center p-8">
-                                <p className="text-muted-foreground">
-                                    Please sign in to continue
-                                </p>
-                            </div>
-                        </SidebarInset>
+                        <AppShellContent signedIn={false} />
                     </SettingsProvider>
                 </db.SignedOut>
             </TimerSheetProvider>
@@ -66,7 +92,9 @@ function RootLayout() {
             <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
                 <Toaster position="top-center" richColors />
                 <AppShell />
-                <TanStackRouterDevtools position="bottom-right" />
+                {import.meta.env.DEV && (
+                    <TanStackRouterDevtools position="bottom-right" />
+                )}
             </ThemeProvider>
         </GoogleOAuthProvider>
     );

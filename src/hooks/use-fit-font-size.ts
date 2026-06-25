@@ -31,13 +31,14 @@ function computeFitFontSize(
     benchmark: string,
     maxWidthRatio: number,
     fontFamily: string,
-    fontWeight: string
+    fontWeight: string,
+    maxFontSize = MAX_FONT_SIZE
 ): number {
     if (containerWidth <= 0) return MIN_FONT_SIZE;
 
     const maxWidth = containerWidth * maxWidthRatio;
     let lo = MIN_FONT_SIZE;
-    let hi = MAX_FONT_SIZE;
+    let hi = maxFontSize;
     let best = MIN_FONT_SIZE;
 
     while (lo <= hi) {
@@ -62,7 +63,8 @@ function computeFitFontSize(
 export function useFitFontSize(
     ref: RefObject<HTMLElement | null>,
     benchmark: string,
-    maxWidthRatio = DEFAULT_MAX_WIDTH_RATIO
+    maxWidthRatio = DEFAULT_MAX_WIDTH_RATIO,
+    maxFontSize = MAX_FONT_SIZE
 ): number | undefined {
     const [fontSize, setFontSize] = useState<number | undefined>(undefined);
 
@@ -77,7 +79,8 @@ export function useFitFontSize(
                 benchmark,
                 maxWidthRatio,
                 computed.fontFamily,
-                computed.fontWeight
+                computed.fontWeight,
+                maxFontSize
             );
             setFontSize(size);
         };
@@ -86,7 +89,7 @@ export function useFitFontSize(
         const observer = new ResizeObserver(update);
         observer.observe(el);
         return () => observer.disconnect();
-    }, [ref, benchmark, maxWidthRatio]);
+    }, [ref, benchmark, maxWidthRatio, maxFontSize]);
 
     return fontSize;
 }

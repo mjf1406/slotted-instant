@@ -7,6 +7,7 @@ interface FitTextProps {
     children: ReactNode;
     className?: string;
     style?: CSSProperties;
+    maxFontSize?: number;
 }
 
 export function FitText({
@@ -14,9 +15,10 @@ export function FitText({
     children,
     className,
     style,
+    maxFontSize,
 }: FitTextProps) {
     const ref = useRef<HTMLDivElement>(null);
-    const fontSize = useFitFontSize(ref, benchmark);
+    const fontSize = useFitFontSize(ref, benchmark, undefined, maxFontSize);
 
     return (
         <div
