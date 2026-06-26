@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { id } from "@instantdb/react";
 import { db } from "@/lib/db";
 import { AudioCuesEditor } from "@/components/clock/AudioCuesEditor";
@@ -17,6 +17,7 @@ import {
 import {
     CLOCK_SIZE_OPTIONS,
     DATE_SIZE_OPTIONS,
+    DISPLAY_FONT_SIZE_OPTIONS,
     DEFAULT_CLOCK_SETTINGS,
     snapToSizeOption,
 } from "@/lib/clock-settings";
@@ -60,9 +61,24 @@ export function ClockSettingsSection() {
         bgTransition: DEFAULT_CLOCK_SETTINGS.bgTransition,
         audioCues: {} as AudioCues,
         sidebarDefaultOpen: DEFAULT_CLOCK_SETTINGS.sidebarDefaultOpen,
+        displayContentFontSize: String(
+            DEFAULT_CLOCK_SETTINGS.displayContentFontSize
+        ),
+        displayHeadingFontSize: String(
+            DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize
+        ),
     });
     const [isSaving, setIsSaving] = useState(false);
     const [hasLoaded, setHasLoaded] = useState(false);
+    const pendingSettingsIdRef = useRef<string | null>(null);
+
+    const getSettingsId = () => {
+        if (existing?.id) return existing.id;
+        if (!pendingSettingsIdRef.current) {
+            pendingSettingsIdRef.current = id();
+        }
+        return pendingSettingsIdRef.current;
+    };
 
     useEffect(() => {
         if (data === undefined) return;
@@ -121,49 +137,77 @@ export function ClockSettingsSection() {
                 sidebarDefaultOpen:
                     existing.sidebarDefaultOpen ??
                     DEFAULT_CLOCK_SETTINGS.sidebarDefaultOpen,
+                displayContentFontSize: String(
+                    snapToSizeOption(
+                        existing.displayContentFontSize ??
+                            DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
+                        DISPLAY_FONT_SIZE_OPTIONS
+                    )
+                ),
+                displayHeadingFontSize: String(
+                    snapToSizeOption(
+                        existing.displayHeadingFontSize ??
+                            DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize,
+                        DISPLAY_FONT_SIZE_OPTIONS
+                    )
+                ),
             });
         }
         setHasLoaded(true);
     }, [data, existing]);
+
+    const buildPayload = () => ({
+        clockSize: Number(form.clockSize),
+        dateSize: Number(form.dateSize),
+        currentTimeSize: Number(form.currentTimeSize),
+        endTimeSize: Number(form.endTimeSize),
+        timerTitleSize: Number(form.timerTitleSize),
+        clockBgColor: form.clockBgColor,
+        rotationBgColor: form.rotationBgColor,
+        transitionBgColor: form.transitionBgColor,
+        timerBgColor: form.timerBgColor,
+        dateLocation: form.dateLocation,
+        timeFormat: form.timeFormat,
+        timerEndBehavior: form.timerEndBehavior,
+        overtimeAutoDismissSeconds: Number(form.overtimeAutoDismissSeconds),
+        bgTransition: form.bgTransition,
+        audioCues: stripUndefinedAudioCues(form.audioCues),
+        sidebarDefaultOpen: form.sidebarDefaultOpen,
+        displayContentFontSize: Number(form.displayContentFontSize),
+        displayHeadingFontSize: Number(form.displayHeadingFontSize),
+    });
+
+    const persistClockSettings = async (
+        payload: ReturnType<typeof buildPayload>
+    ) => {
+        if (!user?.id) return;
+        const settingsId = getSettingsId();
+        if (existing) {
+            await db.transact(db.tx.clockSettings[settingsId].update(payload));
+            return;
+        }
+        await db.transact(
+            db.tx.clockSettings[settingsId]
+                .update(payload)
+                .link({ owner: user.id })
+        );
+    };
+
+    const handleHeadingFontSizeChange = (value: string) => {
+        const size = Number(value);
+        setForm((f) => ({ ...f, displayHeadingFontSize: value }));
+        void persistClockSettings({
+            ...buildPayload(),
+            displayHeadingFontSize: size,
+        });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.id) return;
         setIsSaving(true);
         try {
-            const settingsId = existing?.id ?? id();
-            const payload = {
-                clockSize: Number(form.clockSize),
-                dateSize: Number(form.dateSize),
-                currentTimeSize: Number(form.currentTimeSize),
-                endTimeSize: Number(form.endTimeSize),
-                timerTitleSize: Number(form.timerTitleSize),
-                clockBgColor: form.clockBgColor,
-                rotationBgColor: form.rotationBgColor,
-                transitionBgColor: form.transitionBgColor,
-                timerBgColor: form.timerBgColor,
-                dateLocation: form.dateLocation,
-                timeFormat: form.timeFormat,
-                timerEndBehavior: form.timerEndBehavior,
-                overtimeAutoDismissSeconds: Number(
-                    form.overtimeAutoDismissSeconds
-                ),
-                bgTransition: form.bgTransition,
-                audioCues: stripUndefinedAudioCues(form.audioCues),
-                sidebarDefaultOpen: form.sidebarDefaultOpen,
-            };
-
-            if (existing) {
-                await db.transact(
-                    db.tx.clockSettings[settingsId].update(payload)
-                );
-            } else {
-                await db.transact(
-                    db.tx.clockSettings[settingsId]
-                        .update(payload)
-                        .link({ owner: user.id })
-                );
-            }
+            await persistClockSettings(buildPayload());
         } finally {
             setIsSaving(false);
         }
@@ -265,6 +309,66 @@ export function ClockSettingsSection() {
                         <SelectItem value="return">Return to clock</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            <Separator />
+
+            <div>
+                <h3 className="text-base font-medium">Display content</h3>
+                <p className="text-sm text-muted-foreground">
+                    Font sizes for class content on the classroom display.
+                    Heading size updates live on open displays.
+                </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                    <Label>Body text size</Label>
+                    <Select
+                        value={form.displayContentFontSize}
+                        onValueChange={(v) =>
+                            setForm((f) => ({
+                                ...f,
+                                displayContentFontSize: v,
+                            }))
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {DISPLAY_FONT_SIZE_OPTIONS.map((o) => (
+                                <SelectItem
+                                    key={o.value}
+                                    value={String(o.value)}
+                                >
+                                    {o.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label>Heading text size</Label>
+                    <Select
+                        value={form.displayHeadingFontSize}
+                        onValueChange={handleHeadingFontSizeChange}
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {DISPLAY_FONT_SIZE_OPTIONS.map((o) => (
+                                <SelectItem
+                                    key={o.value}
+                                    value={String(o.value)}
+                                >
+                                    {o.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <Separator />

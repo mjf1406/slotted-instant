@@ -24,7 +24,7 @@ import { useClockSettings, useDisplaySession } from "@/hooks/use-clock-queries";
 import { createAudioUrlMap, useAudioPlayer } from "@/lib/audio-engine";
 import { toAudioUrlList, useAudioFiles } from "@/hooks/use-clock-queries";
 import { getLastTimetableId } from "@/lib/last-timetable";
-import { resolveCurrentSlotClass } from "@/lib/current-slot-class";
+import { resolveCurrentSlotClass, isEarlyPreviewSlot, minutesUntilSlotStart } from "@/lib/current-slot-class";
 import {
     clearPushedSlotClass,
     formatPushOverrideRemaining,
@@ -89,6 +89,19 @@ export function DisplayPage() {
         isPushOverrideActive(pushedUntil, now.getTime());
 
     const activeSlotClass = pushActive ? pushedSlotClass : autoSlotClass;
+
+    const autoSlotLike = useMemo(() => {
+        const slot = autoSlotClass?.slot;
+        if (!slot?.id || !slot.startTime || !slot.endTime || !slot.day) {
+            return null;
+        }
+        return {
+            id: slot.id,
+            day: slot.day,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+        };
+    }, [autoSlotClass?.slot]);
 
     const urlMap = createAudioUrlMap(toAudioUrlList(audioData?.audioFiles ?? []));
     const { unlock } = useAudioPlayer(urlMap);
@@ -195,9 +208,18 @@ export function DisplayPage() {
 
     const statusLabel = pushActive
         ? `Showing pushed class (${formatPushOverrideRemaining(pushedUntil!, now.getTime())})`
-        : autoSlotClass
-          ? "Showing current class"
+        : autoSlotClass && autoSlotLike
+          ? isEarlyPreviewSlot(autoSlotLike, now)
+              ? `Showing upcoming class (starts in ${minutesUntilSlotStart(autoSlotLike, now)} min)`
+              : "Showing current class"
           : null;
+
+    const contentFontSize =
+        settings?.displayContentFontSize ??
+        DEFAULT_CLOCK_SETTINGS.displayContentFontSize;
+    const headingFontSize =
+        settings?.displayHeadingFontSize ??
+        DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize;
 
     return (
         <div
@@ -311,6 +333,8 @@ export function DisplayPage() {
                                 <ScrollArea className="grow p-6">
                                     <ClassDetailsDisplayMode
                                         displayText={displayText}
+                                        contentFontSize={contentFontSize}
+                                        headingFontSize={headingFontSize}
                                     />
                                 </ScrollArea>
                             </>
@@ -320,9 +344,9 @@ export function DisplayPage() {
                                     No class scheduled right now
                                 </p>
                                 <p className="mt-2 max-w-sm text-sm">
-                                    The display will update automatically when
-                                    the next class starts, or you can push a
-                                    class from your timetable.
+                                    The display will update automatically up to
+                                    3 minutes before the next class starts, or
+                                    you can push a class from your timetable.
                                 </p>
                             </div>
                         )}

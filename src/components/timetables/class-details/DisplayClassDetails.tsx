@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { SlotClass } from "@/lib/types";
+import { db } from "@/lib/db";
+import { DEFAULT_CLOCK_SETTINGS } from "@/lib/clock-settings";
+import { useClockSettings } from "@/hooks/use-clock-queries";
 import ClassDetailsHeader from "./ClassDetailsHeader";
 import ClassDetailsDisplayMode from "./ClassDetailsDisplayMode";
 import ClassDetailsEditMode from "./ClassDetailsEditMode";
@@ -30,6 +33,16 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     onSave,
     currentDate = new Date(),
 }) => {
+    const user = db.useUser();
+    const { data: settingsData } = useClockSettings(user?.id);
+    const settings = settingsData?.clockSettings?.[0];
+    const contentFontSize =
+        settings?.displayContentFontSize ??
+        DEFAULT_CLOCK_SETTINGS.displayContentFontSize;
+    const headingFontSize =
+        settings?.displayHeadingFontSize ??
+        DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize;
+
     const [isEditMode, setIsEditMode] = useState(false);
     const [editText, setEditText] = useState("");
     const [isCompleted, setIsCompleted] = useState(false);
@@ -227,6 +240,8 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                             ) : (
                                 <ClassDetailsDisplayMode
                                     displayText={displayText}
+                                    contentFontSize={contentFontSize}
+                                    headingFontSize={headingFontSize}
                                 />
                             )}
                         </div>

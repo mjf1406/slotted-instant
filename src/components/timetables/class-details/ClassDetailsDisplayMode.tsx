@@ -5,10 +5,13 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { sanitizeHtml } from "@/lib/html-utils";
+import { DEFAULT_CLOCK_SETTINGS } from "@/lib/clock-settings";
 import parse, { type DOMNode, Text } from "html-react-parser";
 
 interface ClassDetailsDisplayModeProps {
     displayText: string;
+    contentFontSize?: number;
+    headingFontSize?: number;
 }
 
 const HashtagBadge: React.FC<{ tag: string }> = ({ tag }) => (
@@ -22,8 +25,16 @@ const HashtagBadge: React.FC<{ tag: string }> = ({ tag }) => (
 
 const ClassDetailsDisplayMode: React.FC<ClassDetailsDisplayModeProps> = ({
     displayText,
+    contentFontSize = DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
+    headingFontSize = DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize,
 }) => {
+    const h2Size = headingFontSize * 0.875;
+    const h3Size = headingFontSize * 0.75;
+
     const contentStyle = `
+        .class-content {
+            font-size: ${contentFontSize}px;
+        }
         .class-content ol {
             list-style-type: decimal;
             margin-left: 1.5em;
@@ -36,19 +47,19 @@ const ClassDetailsDisplayMode: React.FC<ClassDetailsDisplayModeProps> = ({
             display: list-item;
         }
         .class-content h1 {
-            font-size: 2em;
+            font-size: ${headingFontSize}px;
             font-weight: bold;
             margin-top: 0.75rem;
             margin-bottom: 0.2rem;
         }
         .class-content h2 {
-            font-size: 1.75em;
+            font-size: ${h2Size}px;
             font-weight: bold;
             margin-top: 0.75rem;
             margin-bottom: 0.2rem;
         }
         .class-content h3 {
-            font-size: 1.5em;
+            font-size: ${h3Size}px;
             font-weight: bold;
             display: list-item;
         }

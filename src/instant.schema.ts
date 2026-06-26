@@ -109,6 +109,8 @@ const _schema = i.schema({
             bgTransition: i.string().optional(),
             audioCues: i.json().optional(),
             sidebarDefaultOpen: i.boolean().optional(),
+            displayContentFontSize: i.number().optional(),
+            displayHeadingFontSize: i.number().optional(),
         }),
         timers: i.entity({
             name: i.string().indexed(),

@@ -27,6 +27,22 @@ export const DATE_SIZE_OPTIONS = [
     { value: 64, label: "Massive" },
 ] as const;
 
+export const DISPLAY_FONT_SIZE_OPTIONS = [
+    { value: 12, label: "12px" },
+    { value: 14, label: "14px" },
+    { value: 16, label: "16px" },
+    { value: 18, label: "18px" },
+    { value: 20, label: "20px" },
+    { value: 24, label: "24px" },
+    { value: 28, label: "28px" },
+    { value: 32, label: "32px" },
+    { value: 36, label: "36px" },
+    { value: 40, label: "40px" },
+    { value: 48, label: "48px" },
+    { value: 56, label: "56px" },
+    { value: 64, label: "64px" },
+] as const;
+
 export function snapToSizeOption(
     value: number,
     options: readonly { value: number }[]
@@ -56,4 +72,6 @@ export const DEFAULT_CLOCK_SETTINGS = {
     overtimeAutoDismissSeconds: 0,
     bgTransition: "circle",
     sidebarDefaultOpen: true,
+    displayContentFontSize: 16,
+    displayHeadingFontSize: 32,
 };
