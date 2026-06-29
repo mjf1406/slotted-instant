@@ -7,6 +7,7 @@ import { Timer } from "lucide-react";
 import { ModeToggle } from "@/components/_themes/theme-toggle";
 import { CreateTimeSlotDialog } from "@/components/timeslots";
 import { CreateClassModal } from "@/components/classes";
+import { QuickTextHeaderButton } from "@/components/quick-text";
 import { useTimetable } from "@/lib/timetable-context";
 import { useTimerSheet } from "@/lib/timer-sheet-context";
 import { db } from "@/lib/db";
@@ -108,6 +109,7 @@ export function AppHeader() {
             </div>
             <div className="ml-auto flex items-center gap-2 px-4">
                 <db.SignedIn>
+                    <QuickTextHeaderButton />
                     <Button
                         variant="outline"
                         size="sm"

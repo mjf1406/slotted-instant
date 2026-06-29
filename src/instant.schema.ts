@@ -111,6 +111,8 @@ const _schema = i.schema({
             sidebarDefaultOpen: i.boolean().optional(),
             displayContentFontSize: i.number().optional(),
             displayHeadingFontSize: i.number().optional(),
+            quickText: i.string().optional(),
+            quickTextTitle: i.string().optional(),
         }),
         timers: i.entity({
             name: i.string().indexed(),

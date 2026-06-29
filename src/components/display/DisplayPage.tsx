@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ClassDetailsDisplayMode from "@/components/timetables/class-details/ClassDetailsDisplayMode";
 import ClassDetailsHeader from "@/components/timetables/class-details/ClassDetailsHeader";
-import { DEFAULT_CLOCK_SETTINGS } from "@/lib/clock-settings";
+import { DEFAULT_CLOCK_SETTINGS, DEFAULT_QUICK_TEXT_TITLE } from "@/lib/clock-settings";
 import type { AudioCues } from "@/lib/audio-cues";
 import {
     DEFAULT_BG_TRANSITION,
@@ -24,7 +24,12 @@ import { useClockSettings, useDisplaySession } from "@/hooks/use-clock-queries";
 import { createAudioUrlMap, useAudioPlayer } from "@/lib/audio-engine";
 import { toAudioUrlList, useAudioFiles } from "@/hooks/use-clock-queries";
 import { getLastTimetableId } from "@/lib/last-timetable";
-import { resolveCurrentSlotClass, isEarlyPreviewSlot, minutesUntilSlotStart } from "@/lib/current-slot-class";
+import {
+    resolveCurrentSlotClass,
+    findCurrentSlot,
+    isEarlyPreviewSlot,
+    minutesUntilSlotStart,
+} from "@/lib/current-slot-class";
 import {
     clearPushedSlotClass,
     formatPushOverrideRemaining,
@@ -89,9 +94,17 @@ export function DisplayPage() {
         isPushOverrideActive(pushedUntil, now.getTime());
 
     const activeSlotClass = pushActive ? pushedSlotClass : autoSlotClass;
+    const showClassContent = !!activeSlotClass?.class;
+    const globalQuickText =
+        !pushActive && !showClassContent ? settings?.quickText : null;
+
+    const currentSlot = useMemo(() => {
+        if (!timetable) return null;
+        return findCurrentSlot(timetable.slots ?? [], now);
+    }, [now, timetable]);
 
     const autoSlotLike = useMemo(() => {
-        const slot = autoSlotClass?.slot;
+        const slot = activeSlotClass?.slot ?? currentSlot;
         if (!slot?.id || !slot.startTime || !slot.endTime || !slot.day) {
             return null;
         }
@@ -101,7 +114,7 @@ export function DisplayPage() {
             startTime: slot.startTime,
             endTime: slot.endTime,
         };
-    }, [autoSlotClass?.slot]);
+    }, [activeSlotClass?.slot, currentSlot]);
 
     const urlMap = createAudioUrlMap(toAudioUrlList(audioData?.audioFiles ?? []));
     const { unlock } = useAudioPlayer(urlMap);
@@ -194,11 +207,12 @@ export function DisplayPage() {
         globalAudioCues: (settings?.audioCues as AudioCues | undefined) ?? undefined,
     };
 
-    const displayText =
-        activeSlotClass?.text ||
-        activeSlotClass?.class?.defaultText ||
-        "";
-    const classDetails = activeSlotClass?.class;
+    const displayText = showClassContent
+        ? activeSlotClass?.text ||
+          activeSlotClass?.class?.defaultText ||
+          ""
+        : globalQuickText || "";
+    const classDetails = showClassContent ? activeSlotClass?.class : null;
     const formattedDate = now.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
@@ -208,12 +222,16 @@ export function DisplayPage() {
 
     const statusLabel = pushActive
         ? `Showing pushed class (${formatPushOverrideRemaining(pushedUntil!, now.getTime())})`
-        : autoSlotClass && autoSlotLike
+        : showClassContent && autoSlotLike
           ? isEarlyPreviewSlot(autoSlotLike, now)
               ? `Showing upcoming class (starts in ${minutesUntilSlotStart(autoSlotLike, now)} min)`
               : "Showing current class"
-          : null;
+          : globalQuickText
+            ? "Showing quick text"
+            : null;
 
+    const globalQuickTextTitle =
+        settings?.quickTextTitle?.trim() || DEFAULT_QUICK_TEXT_TITLE;
     const contentFontSize =
         settings?.displayContentFontSize ??
         DEFAULT_CLOCK_SETTINGS.displayContentFontSize;
@@ -330,6 +348,24 @@ export function DisplayPage() {
                                     showEditButton={false}
                                     showShortcuts={false}
                                 />
+                                <ScrollArea className="grow p-6">
+                                    <ClassDetailsDisplayMode
+                                        displayText={displayText}
+                                        contentFontSize={contentFontSize}
+                                        headingFontSize={headingFontSize}
+                                    />
+                                </ScrollArea>
+                            </>
+                        ) : globalQuickText ? (
+                            <>
+                                <div className="border-b bg-muted/50 p-6">
+                                    <h2 className="text-2xl font-bold text-foreground">
+                                        {globalQuickTextTitle}
+                                    </h2>
+                                    <p className="text-muted-foreground">
+                                        {formattedDate}
+                                    </p>
+                                </div>
                                 <ScrollArea className="grow p-6">
                                     <ClassDetailsDisplayMode
                                         displayText={displayText}

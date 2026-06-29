@@ -75,3 +75,5 @@ export const DEFAULT_CLOCK_SETTINGS = {
     displayContentFontSize: 16,
     displayHeadingFontSize: 32,
 };
+
+export const DEFAULT_QUICK_TEXT_TITLE = "Quick text";
