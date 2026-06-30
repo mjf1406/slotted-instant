@@ -6,7 +6,11 @@ export type BuiltinAudioEntry = {
 
 /** Built-in sounds available to all users via static URLs in /public/audio */
 export const DEFAULT_BUILTIN_AUDIO: BuiltinAudioEntry[] = [
-    { key: "jeopardy", name: "Jeopardy", url: "/audio/jeopardy.mp3" },
+    {
+        key: "jeopardy",
+        name: "Jeopardy",
+        url: "/audio/30s-jeopardy-song.mp3",
+    },
     {
         key: "10s-calm-alarm",
         name: "10s calm alarm",
@@ -20,7 +24,7 @@ export const DEFAULT_BUILTIN_AUDIO: BuiltinAudioEntry[] = [
     {
         key: "3-minute-warning",
         name: "3 minute warning",
-        url: "/audio/3-minute-warning.mp3",
+        url: "/audio/3-minutes-warning.mp3",
     },
     {
         key: "4s-magical-surprise",

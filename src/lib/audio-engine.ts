@@ -33,6 +33,16 @@ export function resolveAudioUrl(
     return urlMap.get(audioId) ?? null;
 }
 
+async function safePlay(audio: HTMLAudioElement): Promise<boolean> {
+    try {
+        await audio.play();
+        return true;
+    } catch (error) {
+        console.warn("Audio playback failed:", audio.src, error);
+        return false;
+    }
+}
+
 export function useAudioPlayer(urlMap: AudioUrlMap) {
     const cacheRef = useRef(new Map<string, HTMLAudioElement>());
     const queueRef = useRef(Promise.resolve());
@@ -69,6 +79,8 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
         if (!audio) {
             audio = new Audio(url);
             cache.set(key, audio);
+        } else if (audio.error) {
+            audio.load();
         }
         return audio;
     }, []);
@@ -120,7 +132,7 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
         sessionPausedRef.current = false;
         if (unlockedRef.current) {
             for (const audio of resumeSnapshotRef.current) {
-                void audio.play();
+                void safePlay(audio);
             }
         }
         resumeSnapshotRef.current = [];
@@ -139,7 +151,7 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
             audio.loop = true;
             audio.currentTime = 0;
             loopAudioRef.current = audio;
-            void audio.play();
+            void safePlay(audio);
         },
         [urlMap, getAudio, stopPlayDuring]
     );
@@ -150,7 +162,7 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
 
     const resumePlayDuring = useCallback(() => {
         if (loopAudioRef.current && unlockedRef.current) {
-            void loopAudioRef.current.play();
+            void safePlay(loopAudioRef.current);
         }
     }, []);
 
@@ -194,7 +206,8 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
                     const audio = getAudio(url);
                     audio.currentTime = 0;
                     try {
-                        await audio.play();
+                        const played = await safePlay(audio);
+                        if (!played) break;
                         if (gen !== playbackGenRef.current) {
                             audio.pause();
                             audio.currentTime = 0;
@@ -239,7 +252,7 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
             unlockedRef.current = true;
             const audio = getAudio(url);
             audio.currentTime = 0;
-            void audio.play();
+            void safePlay(audio);
         },
         [urlMap, getAudio]
     );
@@ -275,7 +288,7 @@ export function useAudioPlayer(urlMap: AudioUrlMap) {
                     { once: true }
                 );
                 if (fromStart) audio.currentTime = 0;
-                void audio.play();
+                void safePlay(audio);
                 setPreviewPlayingId(audioId);
             };
 
