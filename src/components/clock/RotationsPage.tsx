@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { db } from "@/lib/db";
-import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -24,6 +24,21 @@ export function RotationsPage() {
     );
     const [deletingRotation, setDeletingRotation] =
         useState<Rotation | null>(null);
+
+    const openEditDialog = (rotation: Rotation) => {
+        setEditingRotation(rotation);
+        setDialogOpen(true);
+    };
+
+    const handleCardClick = (e: React.MouseEvent, rotation: Rotation) => {
+        if (
+            (e.target as HTMLElement).closest('[role="menu"]') ||
+            (e.target as HTMLElement).closest("button")
+        ) {
+            return;
+        }
+        openEditDialog(rotation);
+    };
 
     return (
         <div className="mx-auto w-full max-w-5xl p-8">
@@ -51,7 +66,8 @@ export function RotationsPage() {
                     {rotations.map((rotation) => (
                         <div
                             key={rotation.id}
-                            className="rounded-xl border p-4"
+                            className="cursor-pointer rounded-xl border p-4 transition-opacity hover:opacity-90"
+                            onClick={(e) => handleCardClick(e, rotation)}
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div>
@@ -68,24 +84,23 @@ export function RotationsPage() {
                                 </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon-sm">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={(e) =>
+                                                e.stopPropagation()
+                                            }
+                                        >
                                             <MoreHorizontal />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            onClick={() => {
-                                                setEditingRotation(rotation);
-                                                setDialogOpen(true);
+                                            className="text-destructive focus:text-destructive"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeletingRotation(rotation);
                                             }}
-                                        >
-                                            <Pencil />
-                                            Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() =>
-                                                setDeletingRotation(rotation)
-                                            }
                                         >
                                             <Trash2 />
                                             Delete

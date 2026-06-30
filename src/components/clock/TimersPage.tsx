@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { db } from "@/lib/db";
-import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -32,6 +32,16 @@ export function TimersPage() {
         setDialogOpen(true);
     };
 
+    const handleCardClick = (e: React.MouseEvent, timer: Timer) => {
+        if (
+            (e.target as HTMLElement).closest('[role="menu"]') ||
+            (e.target as HTMLElement).closest("button")
+        ) {
+            return;
+        }
+        openEditDialog(timer);
+    };
+
     return (
         <div className="mx-auto w-full max-w-5xl p-8">
             <div className="mb-6 flex items-center justify-between gap-4">
@@ -61,7 +71,8 @@ export function TimersPage() {
                     {timers.map((timer) => (
                         <div
                             key={timer.id}
-                            className="relative overflow-hidden rounded-xl ring-1 ring-foreground/10"
+                            className="relative cursor-pointer overflow-hidden rounded-xl ring-1 ring-foreground/10 transition-opacity hover:opacity-90"
+                            onClick={(e) => handleCardClick(e, timer)}
                         >
                             <div
                                 className="absolute inset-0 opacity-20"
@@ -87,23 +98,20 @@ export function TimersPage() {
                                                 variant="ghost"
                                                 size="icon-sm"
                                                 className="shrink-0"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
                                             >
                                                 <MoreHorizontal />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                onClick={() =>
-                                                    openEditDialog(timer)
-                                                }
-                                            >
-                                                <Pencil />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    setDeletingTimer(timer)
-                                                }
+                                                className="text-destructive focus:text-destructive"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeletingTimer(timer);
+                                                }}
                                             >
                                                 <Trash2 />
                                                 Delete
