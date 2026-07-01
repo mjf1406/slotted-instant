@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
-import {
-    Maximize,
-    Minimize,
-    PanelLeft,
-    PanelTop,
-    X,
-} from "lucide-react";
+import { Maximize, Minimize, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/db";
 import { Clock } from "@/components/clock/Clock";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ClassDetailsDisplayMode from "@/components/timetables/class-details/ClassDetailsDisplayMode";
 import ClassDetailsHeader from "@/components/timetables/class-details/ClassDetailsHeader";
@@ -39,7 +40,7 @@ import {
 } from "@/lib/display-session";
 import { clearQuickText } from "@/lib/quick-text";
 
-type SplitOrientation = "horizontal" | "vertical";
+type DisplayLayout = "clockOnly" | "classOnly" | "vertical" | "horizontal";
 
 const displayRoute = getRouteApi("/display");
 
@@ -50,8 +51,7 @@ export function DisplayPage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const clearedPushRef = useRef(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [orientation, setOrientation] =
-        useState<SplitOrientation>("horizontal");
+    const [layout, setLayout] = useState<DisplayLayout>("horizontal");
     const [splitRatio, setSplitRatio] = useState(45);
     const [now, setNow] = useState(() => new Date());
     const [isClearingQuickText, setIsClearingQuickText] = useState(false);
@@ -178,6 +178,41 @@ export function DisplayPage() {
         }
     }, [settings?.id, isClearingQuickText]);
 
+    const beginSplitResize = useCallback(
+        (startX: number, startY: number) => {
+            const isHorizontal = layout === "horizontal";
+            const start = isHorizontal ? startX : startY;
+            const startRatio = splitRatio;
+
+            const onMove = (ev: PointerEvent) => {
+                const container = containerRef.current;
+                if (!container) return;
+                const rect = container.getBoundingClientRect();
+                const total = isHorizontal ? rect.width : rect.height;
+                const current = isHorizontal ? ev.clientX : ev.clientY;
+                const next = Math.min(
+                    75,
+                    Math.max(
+                        25,
+                        startRatio + ((current - start) / total) * 100
+                    )
+                );
+                setSplitRatio(next);
+            };
+
+            const onUp = () => {
+                window.removeEventListener("pointermove", onMove);
+                window.removeEventListener("pointerup", onUp);
+                window.removeEventListener("pointercancel", onUp);
+            };
+
+            window.addEventListener("pointermove", onMove);
+            window.addEventListener("pointerup", onUp);
+            window.addEventListener("pointercancel", onUp);
+        },
+        [layout, splitRatio]
+    );
+
     useEffect(() => {
         const onChange = () => setIsFullscreen(!!document.fullscreenElement);
         document.addEventListener("fullscreenchange", onChange);
@@ -259,6 +294,110 @@ export function DisplayPage() {
         settings?.displayHeadingFontSize ??
         DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize;
 
+    const clockPanel = (
+        <div className="min-h-0 min-w-0 h-full w-full overflow-hidden">
+            <Clock {...clockProps} />
+        </div>
+    );
+
+    const classPanel = (
+        <div
+            className={cn(
+                "min-h-0 min-w-0 h-full w-full flex-1 overflow-hidden",
+                layout === "horizontal" && "border-l",
+                layout === "vertical" && "border-t"
+            )}
+        >
+            <div className="flex h-full flex-col">
+                {classDetails ? (
+                    <>
+                        <ClassDetailsHeader
+                            classDetails={classDetails}
+                            formattedDate={formattedDate}
+                            isComplete={activeSlotClass?.complete ?? false}
+                            isEditMode={false}
+                            onEditClick={() => {}}
+                            onClose={() => {}}
+                            showEditButton={false}
+                            showShortcuts={false}
+                        />
+                        <ScrollArea className="grow p-6">
+                            <ClassDetailsDisplayMode
+                                displayText={displayText}
+                                contentFontSize={contentFontSize}
+                                headingFontSize={headingFontSize}
+                            />
+                        </ScrollArea>
+                    </>
+                ) : globalQuickText ? (
+                    <>
+                        <div className="flex items-center justify-between border-b bg-muted/50 p-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-foreground">
+                                    {globalQuickTextTitle}
+                                </h2>
+                                <p className="text-muted-foreground">
+                                    {formattedDate}
+                                </p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => void handleClearQuickText()}
+                                disabled={isClearingQuickText}
+                                title="Clear quick text"
+                                aria-label="Clear quick text"
+                            >
+                                <X className="h-6 w-6" />
+                            </Button>
+                        </div>
+                        <ScrollArea className="grow p-6">
+                            <ClassDetailsDisplayMode
+                                displayText={displayText}
+                                contentFontSize={contentFontSize}
+                                headingFontSize={headingFontSize}
+                            />
+                        </ScrollArea>
+                    </>
+                ) : (
+                    <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                        <p className="text-lg font-medium">
+                            No class scheduled right now
+                        </p>
+                        <p className="mt-2 max-w-sm text-sm">
+                            The display will update automatically up to 3
+                            minutes before the next class starts, or you can
+                            push a class from your timetable.
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    const splitDivider = (
+        <div
+            className={cn(
+                "relative shrink-0 touch-none",
+                layout === "horizontal"
+                    ? "flex w-8 cursor-col-resize items-stretch justify-center"
+                    : "flex h-8 cursor-row-resize flex-col items-stretch justify-center"
+            )}
+            onPointerDown={(e) => {
+                e.preventDefault();
+                e.currentTarget.setPointerCapture(e.pointerId);
+                beginSplitResize(e.clientX, e.clientY);
+            }}
+        >
+            <div
+                className={cn(
+                    "bg-border hover:bg-primary/30",
+                    layout === "horizontal" ? "h-full w-2" : "h-2 w-full"
+                )}
+            />
+        </div>
+    );
+
     return (
         <div
             ref={containerRef}
@@ -266,23 +405,26 @@ export function DisplayPage() {
         >
             <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
                 <div className="flex items-center gap-1">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                            setOrientation((o) =>
-                                o === "horizontal" ? "vertical" : "horizontal"
-                            )
+                    <Select
+                        value={layout}
+                        onValueChange={(value) =>
+                            setLayout(value as DisplayLayout)
                         }
-                        title="Flip split"
-                        aria-label="Flip split"
                     >
-                        {orientation === "horizontal" ? (
-                            <PanelTop />
-                        ) : (
-                            <PanelLeft />
-                        )}
-                    </Button>
+                        <SelectTrigger
+                            size="sm"
+                            className="bg-background"
+                            aria-label="Display layout"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="clockOnly">Clock only</SelectItem>
+                            <SelectItem value="classOnly">Class only</SelectItem>
+                            <SelectItem value="vertical">Vert</SelectItem>
+                            <SelectItem value="horizontal">Horizontal</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Button
                         variant="outline"
                         size="icon"
@@ -304,123 +446,30 @@ export function DisplayPage() {
                 ) : null}
             </div>
 
-            <div
-                className={cn(
-                    "flex min-h-0 flex-1",
-                    orientation === "horizontal" ? "flex-row" : "flex-col"
-                )}
-            >
+            {layout === "clockOnly" ? (
+                <div className="min-h-0 flex-1">{clockPanel}</div>
+            ) : layout === "classOnly" ? (
+                <div className="min-h-0 flex-1">{classPanel}</div>
+            ) : (
                 <div
-                    className="min-h-0 min-w-0 overflow-hidden"
-                    style={{
-                        [orientation === "horizontal" ? "width" : "height"]:
-                            `${splitRatio}%`,
-                    }}
+                    className={cn(
+                        "flex min-h-0 flex-1",
+                        layout === "horizontal" ? "flex-row" : "flex-col"
+                    )}
                 >
-                    <Clock {...clockProps} />
-                </div>
-                <div
-                    className="w-2 shrink-0 cursor-col-resize bg-border hover:bg-primary/30"
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        const start = orientation === "horizontal" ? e.clientX : e.clientY;
-                        const startRatio = splitRatio;
-                        const onMove = (ev: MouseEvent) => {
-                            const container = containerRef.current;
-                            if (!container) return;
-                            const rect = container.getBoundingClientRect();
-                            const total =
-                                orientation === "horizontal"
-                                    ? rect.width
-                                    : rect.height;
-                            const delta =
-                                (orientation === "horizontal"
-                                    ? ev.clientX
-                                    : ev.clientY) - start;
-                            const next = Math.min(
-                                75,
-                                Math.max(
-                                    25,
-                                    startRatio + (delta / total) * 100
-                                )
-                            );
-                            setSplitRatio(next);
-                        };
-                        const onUp = () => {
-                            window.removeEventListener("mousemove", onMove);
-                            window.removeEventListener("mouseup", onUp);
-                        };
-                        window.addEventListener("mousemove", onMove);
-                        window.addEventListener("mouseup", onUp);
-                    }}
-                />
-                <div className="min-h-0 min-w-0 flex-1 overflow-hidden border-l">
-                    <div className="flex h-full flex-col">
-                        {classDetails ? (
-                            <>
-                                <ClassDetailsHeader
-                                    classDetails={classDetails}
-                                    formattedDate={formattedDate}
-                                    isComplete={activeSlotClass?.complete ?? false}
-                                    isEditMode={false}
-                                    onEditClick={() => {}}
-                                    onClose={() => {}}
-                                    showEditButton={false}
-                                    showShortcuts={false}
-                                />
-                                <ScrollArea className="grow p-6">
-                                    <ClassDetailsDisplayMode
-                                        displayText={displayText}
-                                        contentFontSize={contentFontSize}
-                                        headingFontSize={headingFontSize}
-                                    />
-                                </ScrollArea>
-                            </>
-                        ) : globalQuickText ? (
-                            <>
-                                <div className="flex items-center justify-between border-b bg-muted/50 p-6">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-foreground">
-                                            {globalQuickTextTitle}
-                                        </h2>
-                                        <p className="text-muted-foreground">
-                                            {formattedDate}
-                                        </p>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => void handleClearQuickText()}
-                                        disabled={isClearingQuickText}
-                                        title="Clear quick text"
-                                        aria-label="Clear quick text"
-                                    >
-                                        <X className="h-6 w-6" />
-                                    </Button>
-                                </div>
-                                <ScrollArea className="grow p-6">
-                                    <ClassDetailsDisplayMode
-                                        displayText={displayText}
-                                        contentFontSize={contentFontSize}
-                                        headingFontSize={headingFontSize}
-                                    />
-                                </ScrollArea>
-                            </>
-                        ) : (
-                            <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                                <p className="text-lg font-medium">
-                                    No class scheduled right now
-                                </p>
-                                <p className="mt-2 max-w-sm text-sm">
-                                    The display will update automatically up to
-                                    3 minutes before the next class starts, or
-                                    you can push a class from your timetable.
-                                </p>
-                            </div>
-                        )}
+                    <div
+                        className="min-h-0 min-w-0 overflow-hidden"
+                        style={{
+                            [layout === "horizontal" ? "width" : "height"]:
+                                `${splitRatio}%`,
+                        }}
+                    >
+                        {clockPanel}
                     </div>
+                    {splitDivider}
+                    {classPanel}
                 </div>
-            </div>
+            )}
         </div>
     );
 }
