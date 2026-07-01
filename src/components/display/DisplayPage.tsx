@@ -5,7 +5,9 @@ import {
     Minimize,
     PanelLeft,
     PanelTop,
+    X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/db";
 import { Clock } from "@/components/clock/Clock";
@@ -35,6 +37,7 @@ import {
     formatPushOverrideRemaining,
     isPushOverrideActive,
 } from "@/lib/display-session";
+import { clearQuickText } from "@/lib/quick-text";
 
 type SplitOrientation = "horizontal" | "vertical";
 
@@ -51,6 +54,7 @@ export function DisplayPage() {
         useState<SplitOrientation>("horizontal");
     const [splitRatio, setSplitRatio] = useState(45);
     const [now, setNow] = useState(() => new Date());
+    const [isClearingQuickText, setIsClearingQuickText] = useState(false);
 
     const timetableId = searchTimetableId ?? getLastTimetableId();
 
@@ -157,6 +161,22 @@ export function DisplayPage() {
             setIsFullscreen(false);
         }
     }, []);
+
+    const handleClearQuickText = useCallback(async () => {
+        const settingsId = settings?.id;
+        if (!settingsId || isClearingQuickText) return;
+
+        setIsClearingQuickText(true);
+        try {
+            await clearQuickText(settingsId);
+            toast.success("Quick text cleared");
+        } catch (error) {
+            console.error("Failed to clear quick text:", error);
+            toast.error("Failed to clear quick text");
+        } finally {
+            setIsClearingQuickText(false);
+        }
+    }, [settings?.id, isClearingQuickText]);
 
     useEffect(() => {
         const onChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -358,13 +378,25 @@ export function DisplayPage() {
                             </>
                         ) : globalQuickText ? (
                             <>
-                                <div className="border-b bg-muted/50 p-6">
-                                    <h2 className="text-2xl font-bold text-foreground">
-                                        {globalQuickTextTitle}
-                                    </h2>
-                                    <p className="text-muted-foreground">
-                                        {formattedDate}
-                                    </p>
+                                <div className="flex items-center justify-between border-b bg-muted/50 p-6">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-foreground">
+                                            {globalQuickTextTitle}
+                                        </h2>
+                                        <p className="text-muted-foreground">
+                                            {formattedDate}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => void handleClearQuickText()}
+                                        disabled={isClearingQuickText}
+                                        title="Clear quick text"
+                                        aria-label="Clear quick text"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </Button>
                                 </div>
                                 <ScrollArea className="grow p-6">
                                     <ClassDetailsDisplayMode
